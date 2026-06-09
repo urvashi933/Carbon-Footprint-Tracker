@@ -602,7 +602,10 @@
                             <div class="web-checker-box">
                                 <h3>Website Carbon Analyzer</h3>
                                 <p class="panel-desc">Enter any website URL to calculate its simulated size and carbon emissions per visit.</p>
-                                <div class="checker-input-group">
+                                <div class="checker-input-group" style="position: relative;">
+                                    <div class="feature-lock-overlay" id="web-checker-lock" onclick="document.getElementById('auth-modal-btn').click()">
+                                        <span>🔒 Login to Analyze</span>
+                                    </div>
                                     <input type="url" id="web-checker-url" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com">
                                     <button id="web-checker-btn" class="primary-btn">Analyze URL</button>
                                 </div>
@@ -947,7 +950,10 @@
                 <button class="prompt-chip" data-action="explain">❓ How to offset?</button>
             </div>
 
-            <form id="chatbot-input-form" class="chatbot-form-area">
+            <form id="chatbot-input-form" class="chatbot-form-area" style="position: relative;">
+                <div class="feature-lock-overlay" id="chatbot-lock" onclick="document.getElementById('auth-modal-btn').click()">
+                    <span>🔒 Login to Chat</span>
+                </div>
                 <input type="text" id="chatbot-input-field" placeholder="Ask EcoBot anything..." required autocomplete="off">
                 <button type="submit" class="primary-btn chat-send-btn">Send</button>
             </form>

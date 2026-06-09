@@ -2161,3 +2161,41 @@ body.dark-theme .prompt-chip:hover {
 .full-width {
     width: 100%;
 }
+
+/* --- FEATURE LOCK OVERLAYS --- */
+.feature-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    cursor: pointer;
+    border-radius: inherit;
+    transition: opacity 0.3s;
+}
+.dark-mode .feature-lock-overlay {
+    background: rgba(30, 30, 30, 0.7);
+}
+.feature-lock-overlay span {
+    background: var(--surface-light);
+    color: var(--text-color);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s;
+}
+.feature-lock-overlay:hover span {
+    transform: scale(1.05);
+}
+.feature-lock-overlay.hidden {
+    display: none;
+}

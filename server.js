@@ -20,23 +20,28 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sqlite3 = require('sqlite3').verbose();
+const { open } = require('sqlite');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hack2skill_super_secret_key';
-const USERS_FILE = path.join(__dirname, 'users.json');
 
-// Initialize users file if it doesn't exist
-if (!fs.existsSync(USERS_FILE)) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify([]));
+let db;
+async function initDB() {
+    db = await open({
+        filename: path.join(__dirname, 'database.sqlite'),
+        driver: sqlite3.Database
+    });
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            progress TEXT
+        )
+    `);
+    console.log("Database initialized");
 }
-
-function getUsers() {
-    const data = fs.readFileSync(USERS_FILE);
-    return JSON.parse(data);
-}
-
-function saveUsers(users) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
+initDB().catch(console.error);
 
 // Auth Middleware
 function authenticateToken(req, res, next) {
@@ -56,54 +61,63 @@ app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
-    const users = getUsers();
-    if (users.find(u => u.username === username)) {
-        return res.status(400).json({ error: 'User already exists' });
+    try {
+        const existing = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+        if (existing) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const result = await db.run('INSERT INTO users (username, password, progress) VALUES (?, ?, ?)', [username, hashedPassword, '{}']);
+
+        const token = jwt.sign({ id: result.lastID, username }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ token, username });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal server error' });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { id: Date.now().toString(), username, password: hashedPassword, progress: {} };
-    users.push(newUser);
-    saveUsers(users);
-
-    const token = jwt.sign({ id: newUser.id, username }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, username });
 });
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = getUsers();
-    const user = users.find(u => u.username === username);
+    try {
+        const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+        if (!user) return res.status(400).json({ error: 'User not found' });
 
-    if (!user) return res.status(400).json({ error: 'User not found' });
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
-
-    const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, username, progress: user.progress });
+        const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '24h' });
+        const progressObj = user.progress ? JSON.parse(user.progress) : {};
+        res.json({ token, username, progress: progressObj });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // --- API: SAVE/LOAD PROGRESS ---
-app.post('/api/save-progress', authenticateToken, (req, res) => {
-    const users = getUsers();
-    const userIndex = users.findIndex(u => u.id === req.user.id);
-    
-    if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
-    
-    users[userIndex].progress = req.body.progress;
-    saveUsers(users);
-    
-    res.json({ success: true, message: 'Progress saved successfully' });
+app.post('/api/save-progress', authenticateToken, async (req, res) => {
+    try {
+        await db.run('UPDATE users SET progress = ? WHERE id = ?', [JSON.stringify(req.body.progress), req.user.id]);
+        res.json({ success: true, message: 'Progress saved successfully' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-app.get('/api/load-progress', authenticateToken, (req, res) => {
-    const users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
-    
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    res.json({ progress: user.progress || {} });
+app.get('/api/load-progress', authenticateToken, async (req, res) => {
+    try {
+        const user = await db.get('SELECT progress FROM users WHERE id = ?', [req.user.id]);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        const progressObj = user.progress ? JSON.parse(user.progress) : {};
+        res.json({ progress: progressObj });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // --- API: GOOGLE GEMINI CHAT PROXY ---

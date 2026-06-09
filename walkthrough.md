@@ -18,10 +18,12 @@ The browser automation captured the expanded calculator tabs, chatbot panel, and
 
 ![EcoTrace Chatbot & Website Checker Demo Video](assets/dynamic_backend_verification.webp)
 
-### 3. User Authentication & Cloud Save Flow
-EcoTrace now features a secure, fully functional User Authentication system! Users can create an account, log in, and save their calculator footprint progress to the server. Here is the automated interaction recording of the login and save flow in action:
+### 3. SQLite Database & Premium Feature Gating
+EcoTrace now features a secure, fully functional User Authentication system backed by a robust, local **SQLite Database** (`database.sqlite`)! Users can create an account, log in securely using bcrypt/JWT, and save their calculator footprint progress to the server. 
 
-![EcoTrace Authentication and Cloud Save Demo](assets/auth_flow_test.webp)
+Additionally, the **AI Chatbot** and **Website Carbon Analyzer** are now "Premium" features—they are grayed out with a lock overlay and strictly require the user to sign up before use. Here is the automated interaction recording of the login modal successfully unlocking these features upon a fresh SQLite database registration:
+
+![Premium Features Lock & SQLite Flow](assets/premium_locks_sqlite_test.webp)
 
 ---
 

@@ -1713,6 +1713,10 @@ logoutBtn.addEventListener('click', () => {
     authModalBtn.classList.remove('hidden');
     userProfile.classList.add('hidden');
     saveProgressBtn.classList.add('hidden');
+    
+    // Lock premium features
+    document.getElementById('chatbot-lock')?.classList.remove('hidden');
+    document.getElementById('web-checker-lock')?.classList.remove('hidden');
 });
 
 // Logged In UI State
@@ -1721,6 +1725,10 @@ function setLoggedInState(username) {
     userProfile.classList.remove('hidden');
     saveProgressBtn.classList.remove('hidden');
     userNameDisplay.textContent = username;
+    
+    // Unlock premium features
+    document.getElementById('chatbot-lock')?.classList.add('hidden');
+    document.getElementById('web-checker-lock')?.classList.add('hidden');
 }
 
 // --- SAVE & LOAD PROGRESS LOGIC ---
