@@ -52,6 +52,15 @@ EcoBot parses the user's active calculator emissions to offer targeted tips:
 
 9. **Action Planner & Weekly Habits**: Committable reduction habits linked to a progress bar checklist to measure annual CO₂ offset.
 
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend**: HTML5, CSS3 (Modern Glassmorphism Design System), Vanilla JavaScript (ES6+), Chart.js
+* **Backend**: Node.js, Express.js
+* **Database & Auth**: SQLite (`sqlite3` / `sqlite`), Bcrypt.js, JSON Web Tokens (JWT)
+* **AI Integration**: Google Gemini AI API (`@google/generative-ai`)
+* **Environment Management**: Dotenv
 
 ---
 
