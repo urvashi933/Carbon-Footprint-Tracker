@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoTrace | Carbon Footprint Tracker</title>
+    <title>EcoTrace | Carbon Footprint Awareness & Tracking Platform</title>
+    <meta name="description" content="EcoTrace Carbon & Impact Platform: Compute your carbon footprint, build a personalized action plan, run what-if lifestyle simulations, and chat with EcoBot, a data-grounded climate AI assistant.">
+    <meta name="keywords" content="carbon footprint tracker, climate change, carbon calculator, green commitments, lifestyle simulator, EcoTrace, eco achievements">
+    <meta name="author" content="EcoTrace Developers">
+    <meta name="robots" content="index, follow">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <a href="#main-content" class="skip-to-content">Skip to Main Content</a>
     <div class="app-container">
         <!-- HEADER -->
         <header class="app-header">
@@ -107,7 +112,7 @@
         </nav>
 
         <!-- MAIN CONTENT -->
-        <main class="app-content">
+        <main class="app-content" id="main-content">
 
             <!-- DASHBOARD TAB -->
             <section id="dashboard" class="tab-panel active" role="tabpanel" aria-labelledby="tab-dashboard" tabindex="0" aria-hidden="false">
@@ -188,11 +193,75 @@
                         <div class="chart-container">
                             <canvas id="categoryChart"></canvas>
                         </div>
+                        <div class="sr-only">
+                            <table id="category-breakdown-table">
+                                <caption>Detailed carbon emissions breakdown by category in tons of CO2 equivalent per year</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Emissions (Tons CO₂e/year)</th>
+                                        <th scope="col">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Transportation</th>
+                                        <td id="breakdown-val-transport">0.00 Tons</td>
+                                        <td id="breakdown-pct-transport">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Home Energy</th>
+                                        <td id="breakdown-val-energy">0.00 Tons</td>
+                                        <td id="breakdown-pct-energy">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Food & Diet</th>
+                                        <td id="breakdown-val-food">0.00 Tons</td>
+                                        <td id="breakdown-pct-food">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Lifestyle & Waste</th>
+                                        <td id="breakdown-val-waste">0.00 Tons</td>
+                                        <td id="breakdown-pct-waste">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Digital Carbon</th>
+                                        <td id="breakdown-val-digital">0.00 Tons</td>
+                                        <td id="breakdown-pct-digital">0%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="chart-card glass-panel animate-slide-up" style="--delay: 6;">
                         <h3>How You Compare (Tons CO₂e/year)</h3>
                         <div class="chart-container">
                             <canvas id="compareChart"></canvas>
+                        </div>
+                        <div class="sr-only">
+                            <table id="compare-table">
+                                <caption>Comparison of your carbon footprint with national average and net zero target in tons of CO2 equivalent per year</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Metric</th>
+                                        <th scope="col">Emissions (Tons CO₂e/year)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">You</th>
+                                        <td id="compare-val-you">0.00 Tons</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">National Average</th>
+                                        <td>8.00 Tons</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Net Zero Target</th>
+                                        <td>2.00 Tons</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -213,7 +282,7 @@
             <!-- CALCULATOR TAB -->
             <section id="calculator" class="tab-panel" role="tabpanel" aria-labelledby="tab-calculator" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
-                    <h1>Carbon Calculator</h1>
+                    <h2>Carbon Calculator</h2>
                     <p>Input your typical daily and yearly habits to generate a custom breakdown of your carbon footprint.</p>
                 </div>
 
@@ -606,8 +675,8 @@
                                     <div class="feature-lock-overlay" id="web-checker-lock">
                                         <span>🔒 Login to Analyze</span>
                                     </div>
-                                    <input type="url" id="web-checker-url" aria-label="Website URL to analyze" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com">
-                                    <button id="web-checker-btn" class="primary-btn">Analyze URL</button>
+                                    <input type="url" id="web-checker-url" aria-label="Website URL to analyze" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com" disabled>
+                                    <button id="web-checker-btn" class="primary-btn" disabled>Analyze URL</button>
                                 </div>
                                 <div id="web-checker-results" class="checker-results-grid hidden">
                                     <div class="checker-res-card">
@@ -653,7 +722,7 @@
             <!-- ACTIONS TAB -->
             <section id="actions" class="tab-panel" role="tabpanel" aria-labelledby="tab-actions" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
-                    <h1>Personalized Action Plan</h1>
+                    <h2>Personalized Action Plan</h2>
                     <p>Build a green checklist. Select actions, track your weekly achievements, and witness your direct carbon reductions.</p>
                 </div>
 
@@ -707,7 +776,7 @@
             <!-- SIMULATOR TAB -->
             <section id="sandbox" class="tab-panel" role="tabpanel" aria-labelledby="tab-sandbox" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
-                    <h1>"What-If" Sandbox Simulator</h1>
+                    <h2>"What-If" Sandbox Simulator</h2>
                     <p>Toggle future life changes in real-time to simulate their compounding impact on your carbon emissions.</p>
                 </div>
 
@@ -831,7 +900,7 @@
             <!-- CLIMATE TRIVIA TAB -->
             <section id="quiz" class="tab-panel" role="tabpanel" aria-labelledby="tab-quiz" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
-                    <h1>Climate Trivia</h1>
+                    <h2>Climate Trivia</h2>
                     <p>Test your environmental awareness. High scorers earn the "Trivia Scholar" badge!</p>
                 </div>
 
@@ -938,9 +1007,9 @@
                 <button id="chatbot-close-btn" class="close-chat" aria-label="Close Chatbot">&times;</button>
             </div>
             
-            <div class="chatbot-messages-area" id="chatbot-messages-container">
+            <div class="chatbot-messages-area" id="chatbot-messages-container" aria-live="polite" role="log">
                 <div class="chat-bubble bot">
-                    Hello! I'm EcoBot, your climate companion. I can analyze your carbon emissions, suggest high-impact habits, or answer environmental questions!
+                    <span class="sr-only">EcoBot: </span>Hello! I'm EcoBot, your climate companion. I can analyze your carbon emissions, suggest high-impact habits, or answer environmental questions!
                 </div>
             </div>
 
@@ -954,8 +1023,8 @@
                 <div class="feature-lock-overlay" id="chatbot-lock">
                     <span>🔒 Login to Chat</span>
                 </div>
-                <input type="text" id="chatbot-input-field" aria-label="Message to EcoBot" placeholder="Ask EcoBot anything..." required autocomplete="off">
-                <button type="submit" class="primary-btn chat-send-btn">Send</button>
+                <input type="text" id="chatbot-input-field" aria-label="Message to EcoBot" placeholder="Ask EcoBot anything..." required autocomplete="off" disabled>
+                <button type="submit" class="primary-btn chat-send-btn" disabled>Send</button>
             </form>
         </div>
         

@@ -918,6 +918,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // 3. UPDATE ACCESSIBLE SUMMARY TABLES
+        const totalValue = results.total || 0;
+        const categoriesMap = {
+            'transport': results.transport,
+            'energy': results.energy,
+            'food': results.food,
+            'waste': results.waste,
+            'digital': results.digital
+        };
+        for (const cat in categoriesMap) {
+            const val = categoriesMap[cat];
+            const pct = totalValue > 0 ? (val / totalValue) * 100 : 0;
+            const valEl = document.getElementById(`breakdown-val-${cat}`);
+            const pctEl = document.getElementById(`breakdown-pct-${cat}`);
+            if (valEl) valEl.textContent = `${val.toFixed(2)} Tons`;
+            if (pctEl) pctEl.textContent = `${pct.toFixed(0)}%`;
+        }
+
+        const compareYouEl = document.getElementById('compare-val-you');
+        if (compareYouEl) {
+            compareYouEl.textContent = `${results.total.toFixed(2)} Tons`;
+        }
     }
 
     // --- BADGES LOGIC ---
@@ -1528,13 +1551,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function appendChatMessage(msg, sender, isHTML = false) {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${sender}`;
+
+        // Add screen reader prefix
+        const srPrefix = document.createElement('span');
+        srPrefix.className = 'sr-only';
+        srPrefix.textContent = sender === 'bot' ? 'EcoBot: ' : 'You: ';
+        bubble.appendChild(srPrefix);
+
+        const contentSpan = document.createElement('span');
         if (isHTML) {
-            bubble.innerHTML = msg;
+            contentSpan.innerHTML = msg;
         } else {
             const temp = document.createElement('div');
             temp.textContent = msg;
-            bubble.innerHTML = temp.innerHTML.replace(/\n/g, '<br>');
+            contentSpan.innerHTML = temp.innerHTML.replace(/\n/g, '<br>');
         }
+        bubble.appendChild(contentSpan);
+
         chatbotMessagesContainer.appendChild(bubble);
         scrollChatToBottom();
     }
@@ -1747,6 +1780,17 @@ logoutBtn.addEventListener('click', () => {
     // Lock premium features
     document.getElementById('chatbot-lock')?.classList.remove('hidden');
     document.getElementById('web-checker-lock')?.classList.remove('hidden');
+
+    // Disable inputs
+    const chatbotInput = document.getElementById('chatbot-input-field');
+    const chatSendBtn = document.querySelector('.chat-send-btn');
+    const webUrlInput = document.getElementById('web-checker-url');
+    const webCheckerBtn = document.getElementById('web-checker-btn');
+    
+    if (chatbotInput) chatbotInput.disabled = true;
+    if (chatSendBtn) chatSendBtn.disabled = true;
+    if (webUrlInput) webUrlInput.disabled = true;
+    if (webCheckerBtn) webCheckerBtn.disabled = true;
 });
 
 // Logged In UI State
@@ -1759,6 +1803,17 @@ function setLoggedInState(username) {
     // Unlock premium features
     document.getElementById('chatbot-lock')?.classList.add('hidden');
     document.getElementById('web-checker-lock')?.classList.add('hidden');
+
+    // Enable inputs
+    const chatbotInput = document.getElementById('chatbot-input-field');
+    const chatSendBtn = document.querySelector('.chat-send-btn');
+    const webUrlInput = document.getElementById('web-checker-url');
+    const webCheckerBtn = document.getElementById('web-checker-btn');
+    
+    if (chatbotInput) chatbotInput.disabled = false;
+    if (chatSendBtn) chatSendBtn.disabled = false;
+    if (webUrlInput) webUrlInput.disabled = false;
+    if (webCheckerBtn) webCheckerBtn.disabled = false;
 }
 
 // --- SAVE & LOAD PROGRESS LOGIC ---

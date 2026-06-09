@@ -17,18 +17,23 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https://*"],
-            connectSrc: ["'self'"]
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'none'"],
+            upgradeInsecureRequests: []
         }
-    }
+    },
+    xFrameOptions: { action: 'deny' },
+    xPoweredBy: false
 }));
 
-// Enable CORS and body parsers
+// Enable CORS and body parsers with size limit
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // Enable Rate Limiting on API endpoints
 const apiLimiter = rateLimit({
@@ -38,10 +43,97 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
     message: { error: 'Too many requests from this IP, please try again after 15 minutes.' }
 });
+
+const chatLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: process.env.NODE_ENV === 'test' ? 1000 : 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many messages sent. Please wait a minute.' }
+});
+
+const webLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: process.env.NODE_ENV === 'test' ? 1000 : 15,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many website checks. Please wait a minute.' }
+});
+
 app.use('/api/', apiLimiter);
+app.use('/api/chat', chatLimiter);
+app.use('/api/check-website', webLimiter);
+
+// Middleware to block requests to sensitive files
+app.use((req, res, next) => {
+    const filePath = req.path.toLowerCase();
+    
+    // Block dotfiles (like .env)
+    if (filePath.split('/').some(part => part.startsWith('.'))) {
+        if (filePath === '/.well-known/security.txt') {
+            return next();
+        }
+        return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Block database, backend scripts, markdown, and config files
+    const blockedExtensions = [
+        '.sqlite',
+        '.db',
+        'server.js',
+        'server.test.js',
+        'package.json',
+        'package-lock.json',
+        'dockerfile',
+        'requirements.txt',
+        'users.json',
+        '.md'
+    ];
+    
+    if (blockedExtensions.some(ext => filePath.endsWith(ext) || filePath.includes('/' + ext))) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    next();
+});
 
 // Serve static frontend files directly from root
 app.use(express.static(__dirname));
+
+// --- INPUT SANITIZATION UTILITIES ---
+const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g;
+const INVISIBLE_CHARS = /[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060-\u2063]/g;
+
+function sanitizeText(input, maxLength = 2000) {
+    if (typeof input !== 'string') return '';
+    let out = input.normalize('NFC');
+    out = out.replace(CONTROL_CHARS, '');
+    out = out.replace(INVISIBLE_CHARS, '');
+    out = out.replace(/\r\n?/g, '\n');
+    out = out.replace(/\n{3,}/g, '\n\n');
+    out = out.trim();
+    if (out.length > maxLength) out = out.slice(0, maxLength);
+    return out;
+}
+
+function escapeHtml(input) {
+    if (typeof input !== 'string') return '';
+    return input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function redactSecrets(input) {
+    if (typeof input !== 'string') return '';
+    let out = input;
+    out = out.replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, '[redacted-bearer]');
+    out = out.replace(/\b(sk|pk|api|key)[-_][A-Za-z0-9]{8,}\b/gi, '[redacted-key]');
+    out = out.replace(/\beyJ[A-Za-z0-9._-]{10,}\b/g, '[redacted-jwt]');
+    return out;
+}
 
 const fs = require('fs');
 const path = require('path');
@@ -184,10 +276,15 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: 'Message content is required.' });
     }
 
+    const sanitizedMessage = redactSecrets(sanitizeText(message, 1000));
+    if (!sanitizedMessage) {
+        return res.status(400).json({ error: 'Message content is required after sanitization.' });
+    }
+
     // Check if Gemini API key exists
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
         // Safe mock fallback if no API key is configured yet
-        const mockReply = generateLocalMockReply(message.toLowerCase(), userStats);
+        const mockReply = generateLocalMockReply(sanitizedMessage.toLowerCase(), userStats);
         return res.json({ 
             reply: mockReply + "\n\n*(Note: Configure a valid `GEMINI_API_KEY` inside `.env` to unlock live Gemini AI capabilities!)*"
         });
@@ -215,7 +312,7 @@ Here are the user's current carbon statistics:
 
 When answering questions, prioritize referencing their stats to offer personalized, data-grounded tips (e.g. if their Transport is highest, recommend biking/carpooling). Keep responses warm, engaging, concise (2-4 sentences max), and format them using clean markdown.`;
 
-        const prompt = `${systemPrompt}\n\nUser Question: ${message}`;
+        const prompt = `${systemPrompt}\n\nUser Question: ${sanitizedMessage}`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -223,10 +320,11 @@ When answering questions, prioritize referencing their stats to offer personaliz
 
         return res.json({ reply: text });
     } catch (error) {
-        console.error('Error calling Gemini API:', error);
-        return res.status(500).json({ 
-            error: 'Failed to generate content from AI.',
-            reply: "I'm having trouble connecting to my AI brain right now. Please check if your `GEMINI_API_KEY` in the `.env` file is correct, or try again shortly!"
+        console.error('Error calling Gemini API:', error.message);
+        // Graceful fallback to local mock reply instead of hard 500 server error
+        const mockReply = generateLocalMockReply(sanitizedMessage.toLowerCase(), userStats);
+        return res.json({ 
+            reply: mockReply + "\n\n*(Note: EcoBot is running in offline mode due to a Gemini API key or connection error. Please verify the `GEMINI_API_KEY` configuration inside `.env`.)*"
         });
     }
 });
@@ -239,10 +337,21 @@ app.post('/api/check-website', async (req, res) => {
         return res.status(400).json({ error: 'URL is required.' });
     }
 
-    // Format URL
-    let targetUrl = url;
+    const sanitizedUrl = sanitizeText(url, 500);
+    if (!sanitizedUrl) {
+        return res.status(400).json({ error: 'URL is required.' });
+    }
+
+    // Format URL and validate
+    let targetUrl = sanitizedUrl;
     if (!/^https?:\/\//i.test(targetUrl)) {
         targetUrl = 'http://' + targetUrl;
+    }
+
+    try {
+        new URL(targetUrl);
+    } catch (e) {
+        return res.status(400).json({ error: 'Invalid URL format.' });
     }
 
     try {

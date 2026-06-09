@@ -1,3 +1,19 @@
-# EcoTrace is a static client-side frontend application (HTML5/CSS3/Vanilla JS).
-# It does not require a Python backend or python dependencies.
-# Node.js dev server dependencies are configured in package.json.
+# Language: JavaScript (Node.js / ECMAScript 2021)
+# Runtime Engine: Node.js >= v18.0.0 (Recommended >= v22.0.0)
+# Package Manager: npm >= v9.0.0
+
+# Core Dependencies & Versions:
+# - express: ^4.19.2 (Backend framework)
+# - sqlite: ^5.1.1 (SQLite wrapper)
+# - sqlite3: ^6.0.1 (SQLite engine)
+# - bcryptjs: ^3.0.3 (Password hashing)
+# - jsonwebtoken: ^9.0.3 (User sessions)
+# - express-rate-limit: ^8.5.2 (Abuse protection)
+# - helmet: ^8.2.0 (Security headers)
+# - @google/generative-ai: ^0.11.0 (Generative AI integration)
+
+# Development & Testing Dependencies:
+# - jest: ^30.4.2 (Test runner)
+# - supertest: ^7.2.2 (HTTP testing)
+# - jest-environment-jsdom: ^30.4.1 (DOM test environment)
+# - eslint: ^10.4.1 (Static analysis)

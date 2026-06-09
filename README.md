@@ -119,6 +119,12 @@ EcoTrace operates as a dynamic full-stack Node.js application to securely handle
    ```
 5. Access the web application at: `http://localhost:3000`
 
+### Running Tests
+To run the automated integration and UI unit test suite:
+```bash
+npm test
+```
+
 ### Running via Docker
 1. Build the Node.js Docker container:
    ```bash
