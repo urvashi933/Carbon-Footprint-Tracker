@@ -10,5 +10,39 @@
     "username": "ecotesterecotecotesterester",
     "password": "$2b$10$Hs1ijfVf7skt9YhS1/3I2eVsAzijtJYY2hR3LEZy.pQft5/wnddm6",
     "progress": {}
+  },
+  {
+    "id": "1780991688578",
+    "username": "ecotester2",
+    "password": "$2b$10$kPVc1jNcpy8Eicjc9AZzq.lnXLh/gIR7BMPO8fj7lRlcRxhTCAHdC",
+    "progress": {
+      "sliders": {
+        "carDistance": "28000",
+        "transitTime": "3",
+        "flightsShort": "2",
+        "flightsLong": "0",
+        "electricity": "300",
+        "cleanMix": "10",
+        "heatingEnergy": "400",
+        "localSourcing": "20",
+        "digitalStreaming": "10",
+        "digitalMeeting": "5",
+        "digitalScrolling": "2"
+      },
+      "radios": {
+        "carFuel": "gasoline",
+        "heatFuel": "natural-gas",
+        "diet": "average-meat",
+        "foodWaste": "minimal",
+        "shopping": "average"
+      },
+      "checkboxes": {
+        "recyclePaper": true,
+        "recyclePlastic": true,
+        "recycleGlass": false,
+        "recycleMetal": false
+      },
+      "activeActions": []
+    }
   }
 ]
