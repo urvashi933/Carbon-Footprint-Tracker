@@ -1,0 +1,1269 @@
+/* ==========================================================================
+   EcoTrace - Core Application Logic & Data Visualization
+   ========================================================================== */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- STATE MANAGEMENT ---
+    let state = {
+        calculatorInputs: {
+            carFuel: 'gasoline',
+            carDistance: 12000,
+            transitTime: 3,
+            flightsShort: 2,
+            flightsLong: 0,
+            electricity: 300,
+            cleanMix: 10,
+            heatFuel: 'natural-gas',
+            heatingEnergy: 400,
+            diet: 'average-meat',
+            localSourcing: 20,
+            foodWaste: 'minimal',
+            shopping: 'average',
+            recyclePaper: true,
+            recyclePlastic: true,
+            recycleGlass: false,
+            recycleMetal: false
+        },
+        commitments: [], // array of action IDs (e.g. ['led-bulbs'])
+        checkedHabits: [], // array of checked commitment IDs for the week
+        sandboxSwitches: {
+            solar: false,
+            vegan: false,
+            ev: false,
+            flights: false,
+            waste: false
+        },
+        quizAnswers: [],
+        quizScore: 0,
+        unlockedBadges: [],
+        theme: 'light'
+    };
+
+    // --- DATA DICTIONARIES ---
+    const ACTIONS_DATABASE = [
+        {
+            id: 'led-bulbs',
+            category: 'energy',
+            title: 'Switch to LED Bulbs',
+            desc: 'Replace standard lightbulbs with energy-efficient LEDs to reduce residential electric draw.',
+            difficulty: 'easy',
+            impact: 150 // kg CO2 saved per year
+        },
+        {
+            id: 'cold-wash',
+            category: 'energy',
+            title: 'Cold Water Laundry',
+            desc: 'Run washing machines on cold cycles. Heating water consumes 90% of a washer\'s energy.',
+            difficulty: 'easy',
+            impact: 80
+        },
+        {
+            id: 'thermostat',
+            category: 'energy',
+            title: 'Adjust Thermostat',
+            desc: 'Lower thermostat by 2°C in winter and raise it by 2°C in summer for climate control savings.',
+            difficulty: 'medium',
+            impact: 220
+        },
+        {
+            id: 'meatless-mondays',
+            category: 'food',
+            title: 'Meatless Mondays',
+            desc: 'Ditch meat items just one day a week to reduce industrial livestock agricultural load.',
+            difficulty: 'easy',
+            impact: 160
+        },
+        {
+            id: 'grow-food',
+            category: 'food',
+            title: 'Grow Your Own Produce',
+            desc: 'Grow a small portion of your herbs and vegetables at home to limit packaging and transport.',
+            difficulty: 'medium',
+            impact: 90
+        },
+        {
+            id: 'compost',
+            category: 'waste',
+            title: 'Compost Organic Waste',
+            desc: 'Compost leftover food scraps to keep organic waste from generating landfill methane.',
+            difficulty: 'medium',
+            impact: 120
+        },
+        {
+            id: 'commute-bike',
+            category: 'transport',
+            title: 'Cycle/Walk Short Trips',
+            desc: 'Choose to bike or walk for all short errands and commutes under 3 kilometers.',
+            difficulty: 'medium',
+            impact: 450
+        },
+        {
+            id: 'carpool',
+            category: 'transport',
+            title: 'Carpool to Commute',
+            desc: 'Ride-share with coworkers or friends to decrease fuel costs and mileage.',
+            difficulty: 'medium',
+            impact: 350
+        },
+        {
+            id: 'no-single-use',
+            category: 'waste',
+            title: 'Zero Single-Use Plastics',
+            desc: 'Swap single-use water bottles, grocery bags, and utensils for reusable alternatives.',
+            difficulty: 'easy',
+            impact: 110
+        },
+        {
+            id: 'solar-panels',
+            category: 'energy',
+            title: 'Rooftop Solar Install',
+            desc: 'Fit solar energy grids or transition household utility to a green community solar program.',
+            difficulty: 'hard',
+            impact: 1200
+        }
+    ];
+
+    const QUIZ_DATABASE = [
+        {
+            question: "Which sector is globally responsible for the largest share of greenhouse gas emissions?",
+            options: [
+                "Transportation (Cars, Planes, Ships)",
+                "Electricity & Heat Production",
+                "Agriculture, Forestry & Land Use",
+                "Industrial Manufacturing & Construction"
+            ],
+            correct: 1,
+            explain: "Electricity and heat production accounts for about 25% of global emissions due to fossil fuel combustion, followed closely by agriculture/forestry at 24%."
+        },
+        {
+            question: "Which food item has the largest carbon footprint per kilogram of finished product?",
+            options: [
+                "Farmed Chicken Meat",
+                "Pork Products",
+                "Cow Milk Cheese",
+                "Beef / Red Meat"
+            ],
+            correct: 3,
+            explain: "Beef produces roughly 60kg of greenhouse gases per kg of meat—more than double cheese, and nearly ten times chicken—due to cow methane emissions and land clearing."
+        },
+        {
+            question: "Approximately how much CO2 does a mature, healthy tree absorb each year?",
+            options: [
+                "Around 2 kg",
+                "Around 22 kg",
+                "Around 220 kg",
+                "Around 2,200 kg"
+            ],
+            correct: 1,
+            explain: "On average, a mature tree absorbs about 22 kg (48 lbs) of carbon dioxide annually, making global reforestation a key natural carbon offset buffer."
+        },
+        {
+            question: "What is the primary greenhouse gas emitted directly by global human activities?",
+            options: [
+                "Methane (CH4)",
+                "Nitrous Oxide (N2O)",
+                "Carbon Dioxide (CO2)",
+                "Fluorinated Gases"
+            ],
+            correct: 2,
+            explain: "Carbon dioxide (CO2) represents about 76% of global human-caused greenhouse emissions, remaining in the atmosphere for centuries."
+        },
+        {
+            question: "Which travel option produces the lowest emissions per passenger-kilometer?",
+            options: [
+                "Passenger Train / Subway",
+                "Average Electric SUV",
+                "Short-Haul Passenger Jet",
+                "Single-Occupant Gasoline Sedan"
+            ],
+            correct: 0,
+            explain: "Trains are highly energy-efficient and aggregate passengers on shared tracks. A typical train journey averages only about 15-30g of CO2 per passenger-km."
+        }
+    ];
+
+    const BADGES_DATABASE = [
+        {
+            id: 'green-citizen',
+            title: 'Green Citizen',
+            desc: 'Footprint is below the national average (8.0 Tons).',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`
+        },
+        {
+            id: 'eco-warrior',
+            title: 'Eco Warrior',
+            desc: 'Footprint is below the target threshold (4.0 Tons).',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`
+        },
+        {
+            id: 'committed',
+            title: 'Activist',
+            desc: 'Committed to 3 or more carbon-reduction actions.',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`
+        },
+        {
+            id: 'plant-powered',
+            title: 'Plant Powered',
+            desc: 'Selected Vegetarian or Vegan diet.',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" style="display:none;"/><path d="M2 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" style="display:none;"/><path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1-20 0c0-5.523 4.477-10 10-10zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z" style="display:none;"/><path d="M12 3a9 9 0 0 0-9 9c0 4.5 4.5 9 9 9s9-4.5 9-9-4.5-9-9-9zm0 3c3 0 5 2.5 5 5s-2.5 5-5 5-5-2.5-5-5 2.5-5 5-5z"/></svg>`
+        },
+        {
+            id: 'solar-saver',
+            title: 'Solar Saver',
+            desc: 'Set renewable electricity mix above 75%.',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`
+        },
+        {
+            id: 'carbon-minimalist',
+            title: 'Minimalist',
+            desc: 'Set shopping habits to Minimalist.',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`
+        },
+        {
+            id: 'trivia-scholar',
+            title: 'Trivia Scholar',
+            desc: 'Scored 5/5 on the Climate Trivia challenge.',
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`
+        }
+    ];
+
+    // --- CHARTS OBJECTS ---
+    let categoryChart = null;
+    let compareChart = null;
+
+    // --- INITIALIZE FROM LOCAL STORAGE ---
+    function loadState() {
+        const savedState = localStorage.getItem('ecotrace_state');
+        if (savedState) {
+            try {
+                const parsed = JSON.parse(savedState);
+                state = { ...state, ...parsed };
+            } catch (e) {
+                console.error("Error parsing stored state", e);
+            }
+        }
+    }
+
+    function saveState() {
+        localStorage.setItem('ecotrace_state', JSON.stringify(state));
+    }
+
+    // --- CORE CALCULATOR LOGIC ---
+    function calculateFootprint(inputs = state.calculatorInputs) {
+        // 1. TRANSPORTATION
+        let carFactor = 0.00018; // gasoline (tons CO2 / km)
+        if (inputs.carFuel === 'diesel') carFactor = 0.00017;
+        else if (inputs.carFuel === 'hybrid') carFactor = 0.00010;
+        else if (inputs.carFuel === 'electric') carFactor = 0.00004;
+        else if (inputs.carFuel === 'none') carFactor = 0.00000;
+
+        const carEmissions = (inputs.carDistance * carFactor);
+        const transitEmissions = (inputs.transitTime * 52 * 0.0012); // ~0.06 tons per weekly hour
+        const flightsEmissions = (inputs.flightsShort * 0.15) + (inputs.flightsLong * 0.8);
+        const transportTotal = carEmissions + transitEmissions + flightsEmissions;
+
+        // 2. ENERGY
+        const cleanMixMultiplier = (1 - (inputs.cleanMix / 100));
+        const electricityEmissions = (inputs.electricity * 12) * cleanMixMultiplier * 0.00035; // 0.35 kg/kWh
+
+        let heatingFactor = 0.00020; // Natural Gas (tons / kWh)
+        if (inputs.heatFuel === 'oil') heatingFactor = 0.00027;
+        else if (inputs.heatFuel === 'electric') heatingFactor = cleanMixMultiplier * 0.00035;
+        else if (inputs.heatFuel === 'biomass') heatingFactor = 0.00003; // minimal footprint
+
+        const heatingEmissions = (inputs.heatingEnergy * 12) * heatingFactor;
+        const energyTotal = electricityEmissions + heatingEmissions;
+
+        // 3. FOOD & DIET
+        let dietBase = 2.2; // Average meat (tons/yr)
+        if (inputs.diet === 'heavy-meat') dietBase = 3.2;
+        else if (inputs.diet === 'vegetarian') dietBase = 1.5;
+        else if (inputs.diet === 'vegan') dietBase = 0.9;
+
+        let foodWasteAdjustment = 0.0; // Minimal
+        if (inputs.foodWaste === 'moderate') foodWasteAdjustment = 0.15;
+        else if (inputs.foodWaste === 'high') foodWasteAdjustment = 0.40;
+
+        // Local sourcing reduces footprint up to 15% of the base diet
+        const localSourcingDiscount = (inputs.localSourcing / 100) * 0.15 * dietBase;
+        const foodTotal = Math.max(0.6, (dietBase - localSourcingDiscount) + foodWasteAdjustment);
+
+        // 4. LIFESTYLE & WASTE
+        let shoppingBase = 0.8; // Average
+        if (inputs.shopping === 'minimalist') shoppingBase = 0.3;
+        else if (inputs.shopping === 'consumerist') shoppingBase = 2.2;
+
+        let wasteBase = 0.5;
+        let recyclingDiscount = 0.0;
+        if (inputs.recyclePaper) recyclingDiscount += 0.08;
+        if (inputs.recyclePlastic) recyclingDiscount += 0.12;
+        if (inputs.recycleGlass) recyclingDiscount += 0.06;
+        if (inputs.recycleMetal) recyclingDiscount += 0.09;
+
+        const wasteTotal = shoppingBase + Math.max(0.1, wasteBase - recyclingDiscount);
+
+        return {
+            transport: parseFloat(transportTotal.toFixed(2)),
+            energy: parseFloat(energyTotal.toFixed(2)),
+            food: parseFloat(foodTotal.toFixed(2)),
+            waste: parseFloat(wasteTotal.toFixed(2)),
+            total: parseFloat((transportTotal + energyTotal + foodTotal + wasteTotal).toFixed(2))
+        };
+    }
+
+    // --- TAB NAVIGATION ---
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            
+            navButtons.forEach(b => b.classList.remove('active'));
+            tabPanels.forEach(p => p.classList.remove('active'));
+            
+            btn.classList.add('active');
+            const targetEl = document.getElementById(targetTab);
+            if (targetEl) targetEl.classList.add('active');
+
+            if (targetTab === 'dashboard') {
+                updateDashboardCharts();
+            } else if (targetTab === 'sandbox') {
+                updateSandboxSimulation();
+            }
+        });
+    });
+
+    // --- THEME SWITCHING ---
+    const themeToggle = document.getElementById('theme-toggle');
+    const sunIcon = themeToggle.querySelector('.sun-icon');
+    const moonIcon = themeToggle.querySelector('.moon-icon');
+
+    function setTheme(theme) {
+        state.theme = theme;
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+        } else {
+            document.body.classList.remove('dark-theme');
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+        }
+        saveState();
+        updateDashboardCharts();
+    }
+
+    themeToggle.addEventListener('click', () => {
+        setTheme(state.theme === 'light' ? 'dark' : 'light');
+    });
+
+    // Initialize Theme
+    setTheme(state.theme);
+
+    // --- WIZARD FORM LOGIC ---
+    const wizardPanels = document.querySelectorAll('.wizard-panel');
+    const wizardTabBtns = document.querySelectorAll('.wizard-tab-btn');
+    const prevBtn = document.getElementById('prev-wizard-btn');
+    const nextBtn = document.getElementById('next-wizard-btn');
+    const wizardDots = document.querySelectorAll('.wizard-progress-dots .dot');
+    let currentWizardIndex = 0;
+
+    function showWizardPanel(index) {
+        currentWizardIndex = index;
+        wizardPanels.forEach((panel, i) => {
+            panel.classList.toggle('active', i === index);
+        });
+        wizardTabBtns.forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        wizardDots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+
+        prevBtn.disabled = index === 0;
+        if (index === wizardPanels.length - 1) {
+            nextBtn.textContent = 'Finish & View Dashboard';
+        } else {
+            nextBtn.textContent = 'Next';
+        }
+    }
+
+    wizardTabBtns.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            showWizardPanel(index);
+        });
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentWizardIndex > 0) {
+            showWizardPanel(currentWizardIndex - 1);
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentWizardIndex < wizardPanels.length - 1) {
+            showWizardPanel(currentWizardIndex + 1);
+        } else {
+            // Jump to Dashboard tab
+            document.querySelector('.nav-btn[data-tab="dashboard"]').click();
+        }
+    });
+
+    // --- CALCULATOR INTERACTION & BINDINGS ---
+    function bindInputs() {
+        // Fuel Type radios
+        const fuelRadios = document.querySelectorAll('input[name="car-fuel"]');
+        const carDistGroup = document.getElementById('car-dist-group');
+        fuelRadios.forEach(radio => {
+            // Setup initial selection
+            if (radio.value === state.calculatorInputs.carFuel) {
+                radio.checked = true;
+                if (radio.value === 'none') carDistGroup.style.display = 'none';
+            }
+            radio.addEventListener('change', (e) => {
+                state.calculatorInputs.carFuel = e.target.value;
+                if (e.target.value === 'none') {
+                    carDistGroup.style.display = 'none';
+                } else {
+                    carDistGroup.style.display = 'flex';
+                }
+                onInputsChange();
+            });
+        });
+
+        // Car Distance
+        const carDistInput = document.getElementById('car-distance');
+        const carDistVal = document.getElementById('car-distance-val');
+        carDistInput.value = state.calculatorInputs.carDistance;
+        carDistVal.textContent = state.calculatorInputs.carDistance.toLocaleString() + ' km';
+        carDistInput.addEventListener('input', (e) => {
+            state.calculatorInputs.carDistance = parseInt(e.target.value);
+            carDistVal.textContent = state.calculatorInputs.carDistance.toLocaleString() + ' km';
+            onInputsChange();
+        });
+
+        // Public Transit
+        const transitInput = document.getElementById('transit-time');
+        const transitVal = document.getElementById('transit-time-val');
+        transitInput.value = state.calculatorInputs.transitTime;
+        transitVal.textContent = state.calculatorInputs.transitTime + ' hours';
+        transitInput.addEventListener('input', (e) => {
+            state.calculatorInputs.transitTime = parseInt(e.target.value);
+            transitVal.textContent = state.calculatorInputs.transitTime + ' hours';
+            onInputsChange();
+        });
+
+        // Short Flights
+        const shortFlightsInput = document.getElementById('flights-short');
+        const shortFlightsVal = document.getElementById('flights-short-val');
+        shortFlightsInput.value = state.calculatorInputs.flightsShort;
+        shortFlightsVal.textContent = state.calculatorInputs.flightsShort + ' flights/yr';
+        shortFlightsInput.addEventListener('input', (e) => {
+            state.calculatorInputs.flightsShort = parseInt(e.target.value);
+            shortFlightsVal.textContent = state.calculatorInputs.flightsShort + ' flights/yr';
+            onInputsChange();
+        });
+
+        // Long Flights
+        const longFlightsInput = document.getElementById('flights-long');
+        const longFlightsVal = document.getElementById('flights-long-val');
+        longFlightsInput.value = state.calculatorInputs.flightsLong;
+        longFlightsVal.textContent = state.calculatorInputs.flightsLong + ' flights/yr';
+        longFlightsInput.addEventListener('input', (e) => {
+            state.calculatorInputs.flightsLong = parseInt(e.target.value);
+            longFlightsVal.textContent = state.calculatorInputs.flightsLong + ' flights/yr';
+            onInputsChange();
+        });
+
+        // Electricity consumption
+        const elecInput = document.getElementById('electricity');
+        const elecVal = document.getElementById('electricity-val');
+        elecInput.value = state.calculatorInputs.electricity;
+        elecVal.textContent = state.calculatorInputs.electricity + ' kWh';
+        elecInput.addEventListener('input', (e) => {
+            state.calculatorInputs.electricity = parseInt(e.target.value);
+            elecVal.textContent = state.calculatorInputs.electricity + ' kWh';
+            onInputsChange();
+        });
+
+        // Clean electricity mix
+        const cleanMixInput = document.getElementById('clean-mix');
+        const cleanMixVal = document.getElementById('clean-mix-val');
+        cleanMixInput.value = state.calculatorInputs.cleanMix;
+        cleanMixVal.textContent = state.calculatorInputs.cleanMix + '%';
+        cleanMixInput.addEventListener('input', (e) => {
+            state.calculatorInputs.cleanMix = parseInt(e.target.value);
+            cleanMixVal.textContent = state.calculatorInputs.cleanMix + '%';
+            onInputsChange();
+        });
+
+        // Heating Fuel Radios
+        const heatRadios = document.querySelectorAll('input[name="heat-fuel"]');
+        heatRadios.forEach(radio => {
+            if (radio.value === state.calculatorInputs.heatFuel) radio.checked = true;
+            radio.addEventListener('change', (e) => {
+                state.calculatorInputs.heatFuel = e.target.value;
+                onInputsChange();
+            });
+        });
+
+        // Heating consumption
+        const heatEnergyInput = document.getElementById('heating-energy');
+        const heatEnergyVal = document.getElementById('heating-energy-val');
+        heatEnergyInput.value = state.calculatorInputs.heatingEnergy;
+        heatEnergyVal.textContent = state.calculatorInputs.heatingEnergy + ' kWh';
+        heatEnergyInput.addEventListener('input', (e) => {
+            state.calculatorInputs.heatingEnergy = parseInt(e.target.value);
+            heatEnergyVal.textContent = state.calculatorInputs.heatingEnergy + ' kWh';
+            onInputsChange();
+        });
+
+        // Diet type radios
+        const dietRadios = document.querySelectorAll('input[name="diet"]');
+        dietRadios.forEach(radio => {
+            if (radio.value === state.calculatorInputs.diet) radio.checked = true;
+            radio.addEventListener('change', (e) => {
+                state.calculatorInputs.diet = e.target.value;
+                onInputsChange();
+            });
+        });
+
+        // Food Local Sourcing
+        const localInput = document.getElementById('local-sourcing');
+        const localVal = document.getElementById('local-sourcing-val');
+        localInput.value = state.calculatorInputs.localSourcing;
+        localVal.textContent = state.calculatorInputs.localSourcing + '%';
+        localInput.addEventListener('input', (e) => {
+            state.calculatorInputs.localSourcing = parseInt(e.target.value);
+            localVal.textContent = state.calculatorInputs.localSourcing + '%';
+            onInputsChange();
+        });
+
+        // Food waste radios
+        const wasteRadios = document.querySelectorAll('input[name="food-waste"]');
+        wasteRadios.forEach(radio => {
+            if (radio.value === state.calculatorInputs.foodWaste) radio.checked = true;
+            radio.addEventListener('change', (e) => {
+                state.calculatorInputs.foodWaste = e.target.value;
+                onInputsChange();
+            });
+        });
+
+        // Shopping frequency radios
+        const shopRadios = document.querySelectorAll('input[name="shopping"]');
+        shopRadios.forEach(radio => {
+            if (radio.value === state.calculatorInputs.shopping) radio.checked = true;
+            radio.addEventListener('change', (e) => {
+                state.calculatorInputs.shopping = e.target.value;
+                onInputsChange();
+            });
+        });
+
+        // Recycling checkboxes
+        const recyclePaperInput = document.getElementById('recycle-paper');
+        recyclePaperInput.checked = state.calculatorInputs.recyclePaper;
+        recyclePaperInput.addEventListener('change', (e) => {
+            state.calculatorInputs.recyclePaper = e.target.checked;
+            onInputsChange();
+        });
+
+        const recyclePlasticInput = document.getElementById('recycle-plastic');
+        recyclePlasticInput.checked = state.calculatorInputs.recyclePlastic;
+        recyclePlasticInput.addEventListener('change', (e) => {
+            state.calculatorInputs.recyclePlastic = e.target.checked;
+            onInputsChange();
+        });
+
+        const recycleGlassInput = document.getElementById('recycle-glass');
+        recycleGlassInput.checked = state.calculatorInputs.recycleGlass;
+        recycleGlassInput.addEventListener('change', (e) => {
+            state.calculatorInputs.recycleGlass = e.target.checked;
+            onInputsChange();
+        });
+
+        const recycleMetalInput = document.getElementById('recycle-metal');
+        recycleMetalInput.checked = state.calculatorInputs.recycleMetal;
+        recycleMetalInput.addEventListener('change', (e) => {
+            state.calculatorInputs.recycleMetal = e.target.checked;
+            onInputsChange();
+        });
+    }
+
+    function onInputsChange() {
+        saveState();
+        checkUnlockedBadges();
+        updateDashboardUI();
+    }
+
+    // --- DASHBOARD UI UPDATING ---
+    function updateDashboardUI() {
+        const results = calculateFootprint();
+        
+        // Total Footprint Text
+        const footprintValueEl = document.getElementById('total-footprint-value');
+        footprintValueEl.textContent = results.total.toFixed(2);
+        
+        // Status Badge
+        const statusEl = document.getElementById('footprint-status');
+        if (results.total < 4.0) {
+            statusEl.textContent = 'Excellent (Eco Target Met)';
+            statusEl.className = 'stat-subtitle status-good';
+        } else if (results.total < 8.0) {
+            statusEl.textContent = 'Moderate (Below Average)';
+            statusEl.className = 'stat-subtitle status-warn';
+        } else {
+            statusEl.textContent = 'Above Average (Action Needed)';
+            statusEl.className = 'stat-subtitle status-bad';
+        }
+
+        // Comparison vs National Average
+        const compareValueEl = document.getElementById('comparison-value');
+        const nationalAvg = 8.0;
+        const diffPercent = Math.round(((results.total - nationalAvg) / nationalAvg) * 100);
+        if (diffPercent < 0) {
+            compareValueEl.textContent = `${Math.abs(diffPercent)}% Less`;
+            compareValueEl.style.color = 'var(--color-green)';
+        } else if (diffPercent > 0) {
+            compareValueEl.textContent = `${diffPercent}% More`;
+            compareValueEl.style.color = '#ef4444';
+        } else {
+            compareValueEl.textContent = 'Equal';
+            compareValueEl.style.color = 'var(--text-primary)';
+        }
+
+        // Active Commitments count
+        const commitCountEl = document.getElementById('active-commitments-count');
+        commitCountEl.textContent = state.commitments.length;
+
+        // Estimated savings
+        const savingsValueEl = document.getElementById('projected-savings-value');
+        const totalSavings = state.commitments.reduce((acc, actionId) => {
+            const act = ACTIONS_DATABASE.find(a => a.id === actionId);
+            return acc + (act ? act.impact : 0);
+        }, 0);
+        savingsValueEl.textContent = totalSavings.toLocaleString() + ' kg';
+
+        // Redraw badges
+        renderBadgesList();
+    }
+
+    // --- CHARTS GENERATION & RENDER ---
+    function updateDashboardCharts() {
+        const results = calculateFootprint();
+        const fontColor = state.theme === 'dark' ? '#92aba0' : '#53645b';
+        const gridColor = state.theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        
+        // 1. DOUGHNUT CHART
+        const categoryData = [results.transport, results.energy, results.food, results.waste];
+        const categoryLabels = ['Transport', 'Energy', 'Food', 'Waste'];
+        const categoryColors = [
+            getComputedStyle(document.documentElement).getPropertyValue('--transport-color').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--energy-color').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--food-color').trim(),
+            getComputedStyle(document.documentElement).getPropertyValue('--waste-color').trim()
+        ];
+
+        if (categoryChart) {
+            categoryChart.data.datasets[0].data = categoryData;
+            categoryChart.data.datasets[0].backgroundColor = categoryColors;
+            categoryChart.options.plugins.legend.labels.color = fontColor;
+            categoryChart.update();
+        } else {
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryData,
+                        backgroundColor: categoryColors,
+                        borderWidth: state.theme === 'dark' ? 2 : 1,
+                        borderColor: state.theme === 'dark' ? '#0f1c16' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15,
+                                color: fontColor,
+                                font: { family: 'Inter', size: 11, weight: '500' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw.toFixed(2)} Tons CO₂e`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // 2. COMPARISON BAR CHART
+        const compareData = [results.total, 8.0, 2.0];
+        const compareLabels = ['You', 'National Average', 'Net Zero Target'];
+        const compareColors = [
+            getComputedStyle(document.documentElement).getPropertyValue('--color-green').trim(),
+            state.theme === 'dark' ? '#273c33' : '#cbd5e1',
+            '#3b82f6'
+        ];
+
+        if (compareChart) {
+            compareChart.data.datasets[0].data = compareData;
+            compareChart.data.datasets[0].backgroundColor = compareColors;
+            compareChart.options.scales.x.ticks.color = fontColor;
+            compareChart.options.scales.x.grid.color = gridColor;
+            compareChart.options.scales.y.ticks.color = fontColor;
+            compareChart.options.scales.y.grid.color = gridColor;
+            compareChart.update();
+        } else {
+            const ctxComp = document.getElementById('compareChart').getContext('2d');
+            compareChart = new Chart(ctxComp, {
+                type: 'bar',
+                data: {
+                    labels: compareLabels,
+                    datasets: [{
+                        data: compareData,
+                        backgroundColor: compareColors,
+                        borderRadius: 6,
+                        barThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: fontColor, font: { family: 'Inter', size: 10 } },
+                            title: { display: true, text: 'Tons CO₂e/year', color: fontColor, font: { family: 'Inter', size: 10, weight: '600' } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: fontColor, font: { family: 'Outfit', size: 11, weight: '600' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw.toFixed(2)} Tons CO₂e/yr`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // --- BADGES LOGIC ---
+    function checkUnlockedBadges() {
+        const results = calculateFootprint();
+        const currentBadges = [...state.unlockedBadges];
+        state.unlockedBadges = [];
+
+        // 1. Green Citizen: Footprint < 8.0 tons
+        if (results.total < 8.0) state.unlockedBadges.push('green-citizen');
+        
+        // 2. Eco Warrior: Footprint < 4.0 tons
+        if (results.total < 4.0) state.unlockedBadges.push('eco-warrior');
+
+        // 3. Activist: committed to 3 or more actions
+        if (state.commitments.length >= 3) state.unlockedBadges.push('committed');
+
+        // 4. Plant Powered: vegetarian or vegan diet
+        if (state.calculatorInputs.diet === 'vegetarian' || state.calculatorInputs.diet === 'vegan') {
+            state.unlockedBadges.push('plant-powered');
+        }
+
+        // 5. Solar Saver: Renewable mix >= 75%
+        if (state.calculatorInputs.cleanMix >= 75) state.unlockedBadges.push('solar-saver');
+
+        // 6. Minimalist: shopping is minimalist
+        if (state.calculatorInputs.shopping === 'minimalist') state.unlockedBadges.push('carbon-minimalist');
+
+        // 7. Trivia Scholar: scored 5/5 on quiz (re-add if present in currentBadges)
+        if (currentBadges.includes('trivia-scholar')) {
+            state.unlockedBadges.push('trivia-scholar');
+        }
+
+        saveState();
+    }
+
+    function renderBadgesList() {
+        const container = document.getElementById('badges-container');
+        container.innerHTML = '';
+
+        BADGES_DATABASE.forEach(badge => {
+            const isUnlocked = state.unlockedBadges.includes(badge.id);
+            const badgeEl = document.createElement('div');
+            badgeEl.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
+            badgeEl.innerHTML = `
+                <div class="badge-icon-wrapper">
+                    ${badge.icon}
+                </div>
+                <div class="badge-info">
+                    <span class="badge-title">${badge.title}</span>
+                    <span class="badge-desc">${badge.desc}</span>
+                </div>
+            `;
+            container.appendChild(badgeEl);
+        });
+
+        document.getElementById('unlocked-count').textContent = state.unlockedBadges.length;
+    }
+
+    // --- ACTIONS & HABITS PLANNER LOGIC ---
+    let activeFilter = 'all';
+    
+    function renderActionsMarketplace() {
+        const grid = document.getElementById('actions-marketplace-grid');
+        grid.innerHTML = '';
+
+        const filteredActions = ACTIONS_DATABASE.filter(action => {
+            return activeFilter === 'all' || action.category === activeFilter;
+        });
+
+        filteredActions.forEach(action => {
+            const isCommitted = state.commitments.includes(action.id);
+            const card = document.createElement('div');
+            card.className = 'action-card';
+            card.innerHTML = `
+                <div class="action-card-header">
+                    <span class="action-category-tag ${action.category}-accent">${action.category}</span>
+                    <span class="action-difficulty-badge diff-${action.difficulty}">${action.difficulty}</span>
+                </div>
+                <div class="action-body">
+                    <h4 class="action-title">${action.title}</h4>
+                    <p class="action-desc">${action.desc}</p>
+                    <span class="action-impact-label">-${action.impact} kg CO₂ / yr</span>
+                </div>
+                <button class="action-commit-btn primary-btn" data-action-id="${action.id}" style="${isCommitted ? 'background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);' : ''}">
+                    ${isCommitted ? 'Cancel Commitment' : 'Commit to Habit'}
+                </button>
+            `;
+
+            const btn = card.querySelector('.action-commit-btn');
+            btn.addEventListener('click', () => {
+                toggleCommitment(action.id);
+            });
+
+            grid.appendChild(card);
+        });
+    }
+
+    function toggleCommitment(actionId) {
+        const index = state.commitments.indexOf(actionId);
+        if (index === -1) {
+            state.commitments.push(actionId);
+        } else {
+            state.commitments.splice(index, 1);
+            // Also uncheck in active habits
+            const habitIdx = state.checkedHabits.indexOf(actionId);
+            if (habitIdx !== -1) {
+                state.checkedHabits.splice(habitIdx, 1);
+            }
+        }
+        saveState();
+        checkUnlockedBadges();
+        updateDashboardUI();
+        renderActionsMarketplace();
+        renderCommitmentsChecklist();
+    }
+
+    // Filters behavior
+    const filterChips = document.querySelectorAll('.filter-chip');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            filterChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeFilter = chip.getAttribute('data-filter');
+            renderActionsMarketplace();
+        });
+    });
+
+    function renderCommitmentsChecklist() {
+        const container = document.getElementById('commitments-checklist-container');
+        const countVal = document.getElementById('active-com-val');
+        const savingsVal = document.getElementById('active-savings-val');
+        const progressBarFill = document.getElementById('weekly-savings-bar');
+        const percentageText = document.getElementById('weekly-savings-percentage');
+
+        container.innerHTML = '';
+        countVal.textContent = state.commitments.length;
+
+        // Calculate total savings from active commitments
+        const totalSaved = state.commitments.reduce((acc, actionId) => {
+            const act = ACTIONS_DATABASE.find(a => a.id === actionId);
+            return acc + (act ? act.impact : 0);
+        }, 0);
+        savingsVal.textContent = totalSaved.toLocaleString() + ' kg';
+
+        if (state.commitments.length === 0) {
+            container.innerHTML = `
+                <div class="checklist-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="placeholder-icon">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <p>You haven't committed to any habits yet. Choose actions on the left to start shrinking your footprint!</p>
+                </div>
+            `;
+            progressBarFill.style.width = '0%';
+            percentageText.textContent = '0%';
+            return;
+        }
+
+        // Generate Checklist Items
+        state.commitments.forEach(actionId => {
+            const action = ACTIONS_DATABASE.find(a => a.id === actionId);
+            if (!action) return;
+
+            const isChecked = state.checkedHabits.includes(actionId);
+            const item = document.createElement('div');
+            item.className = `checklist-item ${isChecked ? 'checked' : ''}`;
+            item.innerHTML = `
+                <div class="checklist-item-left">
+                    <input type="checkbox" data-habit-id="${actionId}" ${isChecked ? 'checked' : ''}>
+                    <span class="checklist-item-title">${action.title}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="checklist-item-impact">-${action.impact} kg</span>
+                    <button class="remove-commit-btn" data-remove-id="${actionId}" title="Remove Commitment">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            // Bind checkbox checking
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    if (!state.checkedHabits.includes(actionId)) {
+                        state.checkedHabits.push(actionId);
+                    }
+                } else {
+                    const idx = state.checkedHabits.indexOf(actionId);
+                    if (idx !== -1) {
+                        state.checkedHabits.splice(idx, 1);
+                    }
+                }
+                saveState();
+                renderCommitmentsChecklist();
+            });
+
+            // Bind remove button
+            const removeBtn = item.querySelector('.remove-commit-btn');
+            removeBtn.addEventListener('click', () => {
+                toggleCommitment(actionId);
+            });
+
+            container.appendChild(item);
+        });
+
+        // Weekly progress calculations
+        const checkedCount = state.checkedHabits.length;
+        const totalCount = state.commitments.length;
+        const progressPercentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+        
+        progressBarFill.style.width = `${progressPercentage}%`;
+        percentageText.textContent = `${progressPercentage}%`;
+    }
+
+    // --- "WHAT-IF" SANDBOX SIMULATOR ---
+    const simSolar = document.getElementById('sim-solar');
+    const simVegan = document.getElementById('sim-vegan');
+    const simEV = document.getElementById('sim-ev');
+    const simFlights = document.getElementById('sim-flights');
+    const simWaste = document.getElementById('sim-waste');
+
+    // Bind Sandbox toggle triggers
+    [simSolar, simVegan, simEV, simFlights, simWaste].forEach(el => {
+        el.addEventListener('change', () => {
+            state.sandboxSwitches = {
+                solar: simSolar.checked,
+                vegan: simVegan.checked,
+                ev: simEV.checked,
+                flights: simFlights.checked,
+                waste: simWaste.checked
+            };
+            saveState();
+            updateSandboxSimulation();
+        });
+    });
+
+    // Populate toggles from initial state on load
+    function initSandboxState() {
+        simSolar.checked = state.sandboxSwitches.solar;
+        simVegan.checked = state.sandboxSwitches.vegan;
+        simEV.checked = state.sandboxSwitches.ev;
+        simFlights.checked = state.sandboxSwitches.flights;
+        simWaste.checked = state.sandboxSwitches.waste;
+    }
+
+    function updateSandboxSimulation() {
+        const baseline = calculateFootprint();
+        
+        // Construct sandbox cloned inputs
+        const sandboxInputs = { ...state.calculatorInputs };
+
+        // Apply Sandbox Overrides
+        if (state.sandboxSwitches.solar) {
+            sandboxInputs.cleanMix = 100;
+            if (sandboxInputs.heatFuel === 'electric') {
+                // electric heat becomes powered by 100% solar
+            }
+        }
+        if (state.sandboxSwitches.vegan) {
+            sandboxInputs.diet = 'vegan';
+        }
+        if (state.sandboxSwitches.ev) {
+            sandboxInputs.carFuel = 'electric';
+            // Assume electric car drives with cleanMix utility mix if solar is active
+            if (state.sandboxSwitches.solar) {
+                sandboxInputs.cleanMix = 100;
+            }
+        }
+        if (state.sandboxSwitches.flights) {
+            sandboxInputs.flightsShort = Math.round(sandboxInputs.flightsShort / 2);
+            sandboxInputs.flightsLong = Math.round(sandboxInputs.flightsLong / 2);
+        }
+        if (state.sandboxSwitches.waste) {
+            sandboxInputs.shopping = 'minimalist';
+            sandboxInputs.recyclePaper = true;
+            sandboxInputs.recyclePlastic = true;
+            sandboxInputs.recycleGlass = true;
+            sandboxInputs.recycleMetal = true;
+        }
+
+        const simulated = calculateFootprint(sandboxInputs);
+
+        // Update Graphic Bars
+        const baselineValEl = document.getElementById('sim-baseline-value');
+        const projectedValEl = document.getElementById('sim-projected-value');
+        const baselineBar = document.getElementById('sim-baseline-fill');
+        const projectedBar = document.getElementById('sim-projected-fill');
+
+        baselineValEl.textContent = `${baseline.total.toFixed(2)} Tons`;
+        projectedValEl.textContent = `${simulated.total.toFixed(2)} Tons`;
+
+        // Bar sizing relative to baseline
+        const maxVal = Math.max(baseline.total, 8.0);
+        const baselinePct = (baseline.total / maxVal) * 100;
+        const projectedPct = (simulated.total / maxVal) * 100;
+
+        baselineBar.style.width = `${baselinePct}%`;
+        projectedBar.style.width = `${projectedPct}%`;
+
+        // Update Results Cards
+        const avoidedValEl = document.getElementById('sim-avoided-val');
+        const avoidedPctEl = document.getElementById('sim-avoided-pct');
+        const treesValEl = document.getElementById('sim-trees-val');
+
+        const tonsAvoided = Math.max(0, baseline.total - simulated.total);
+        const percentReduced = baseline.total > 0 ? Math.round((tonsAvoided / baseline.total) * 100) : 0;
+        
+        avoidedValEl.textContent = tonsAvoided.toFixed(2);
+        avoidedPctEl.textContent = `${percentReduced}% Reduction`;
+
+        // 1 Tree absorbs roughly 22kg CO2 per year
+        const treesEquivalent = Math.round((tonsAvoided * 1000) / 22);
+        treesValEl.textContent = treesEquivalent.toLocaleString();
+
+        // Render Trees SVG forest plot
+        renderSandboxForest(treesEquivalent);
+    }
+
+    function renderSandboxForest(numTrees) {
+        const plot = document.getElementById('tree-plot-area');
+        plot.innerHTML = '';
+
+        // Draw 1 tree icon for every 20 trees equivalent (up to 40 icons max to avoid performance lag)
+        const iconsToDraw = Math.min(40, Math.floor(numTrees / 12));
+        
+        if (iconsToDraw === 0) {
+            plot.innerHTML = '<span style="font-size:0.8rem; color:var(--text-secondary); opacity:0.6; padding:1.5rem 0;">Simulation results are equal. Check toggles above to grow your simulated forest!</span>';
+            return;
+        }
+
+        const treeSVG = `
+            <svg class="sim-tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 22h20L12 2z" fill="rgba(16, 185, 129, 0.2)" stroke="var(--color-green)"/>
+                <path d="M12 12v10" stroke="var(--color-green-dark)" stroke-width="2"/>
+            </svg>
+        `;
+
+        for (let i = 0; i < iconsToDraw; i++) {
+            const treeWrapper = document.createElement('div');
+            treeWrapper.style.animationDelay = `${i * 0.03}s`;
+            treeWrapper.innerHTML = treeSVG;
+            plot.appendChild(treeWrapper.firstElementChild);
+        }
+    }
+
+    // --- CLIMATE TRIVIA QUIZ ENGINE ---
+    const quizIntro = document.getElementById('quiz-intro');
+    const quizQuestionContainer = document.getElementById('quiz-question-container');
+    const quizResults = document.getElementById('quiz-results');
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    const retryQuizBtn = document.getElementById('retry-quiz-btn');
+    const viewDashboardBtn = document.getElementById('view-dashboard-btn');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    
+    const questionTextEl = document.getElementById('quiz-question-text');
+    const optionsContainer = document.getElementById('quiz-options-container');
+    const progressFill = document.getElementById('quiz-progress-fill');
+    const progressNumText = document.getElementById('quiz-question-num');
+    const scoreTextEl = document.getElementById('quiz-score-indicator');
+    
+    const feedbackPanel = document.getElementById('quiz-feedback');
+    const feedbackStatusEl = document.getElementById('feedback-status');
+    const feedbackExplainEl = document.getElementById('feedback-explanation');
+
+    let currentQuestionIndex = 0;
+    let quizScore = 0;
+    let hasAnswered = false;
+
+    startQuizBtn.addEventListener('click', startQuiz);
+    retryQuizBtn.addEventListener('click', startQuiz);
+    nextQuestionBtn.addEventListener('click', handleNextQuestion);
+    
+    viewDashboardBtn.addEventListener('click', () => {
+        document.querySelector('.nav-btn[data-tab="dashboard"]').click();
+    });
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        quizIntro.classList.remove('active');
+        quizResults.classList.remove('active');
+        quizQuestionContainer.classList.add('active');
+        loadQuestion(0);
+    }
+
+    function loadQuestion(index) {
+        hasAnswered = false;
+        nextQuestionBtn.disabled = true;
+        feedbackPanel.classList.remove('active');
+        
+        const questionData = QUIZ_DATABASE[index];
+        questionTextEl.textContent = questionData.question;
+        progressNumText.textContent = `Question ${index + 1} of ${QUIZ_DATABASE.length}`;
+        scoreTextEl.textContent = `Eco Score: ${quizScore}/${QUIZ_DATABASE.length}`;
+        
+        const percentage = ((index + 1) / QUIZ_DATABASE.length) * 100;
+        progressFill.style.width = `${percentage}%`;
+
+        optionsContainer.innerHTML = '';
+        questionData.options.forEach((optText, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-opt-btn';
+            btn.textContent = optText;
+            btn.addEventListener('click', () => {
+                if (!hasAnswered) selectOption(i);
+            });
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(selectedIdx) {
+        hasAnswered = true;
+        nextQuestionBtn.disabled = false;
+        
+        const questionData = QUIZ_DATABASE[currentQuestionIndex];
+        const correctIdx = questionData.correct;
+        const optionsButtons = optionsContainer.querySelectorAll('.quiz-opt-btn');
+
+        optionsButtons.forEach((btn, i) => {
+            btn.disabled = true;
+            if (i === correctIdx) {
+                btn.classList.add('correct');
+            } else if (i === selectedIdx) {
+                btn.classList.add('incorrect');
+            }
+        });
+
+        const isCorrect = selectedIdx === correctIdx;
+        if (isCorrect) {
+            quizScore++;
+            feedbackPanel.style.borderLeftColor = 'var(--color-green)';
+            feedbackStatusEl.textContent = 'Correct Answer!';
+            feedbackStatusEl.style.color = 'var(--color-green-dark)';
+        } else {
+            feedbackPanel.style.borderLeftColor = '#ef4444';
+            feedbackStatusEl.textContent = 'Incorrect Answer';
+            feedbackStatusEl.style.color = '#ef4444';
+        }
+
+        feedbackExplainEl.textContent = questionData.explain;
+        feedbackPanel.classList.add('active');
+        scoreTextEl.textContent = `Eco Score: ${quizScore}/${QUIZ_DATABASE.length}`;
+    }
+
+    function handleNextQuestion() {
+        if (currentQuestionIndex < QUIZ_DATABASE.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion(currentQuestionIndex);
+        } else {
+            showQuizResults();
+        }
+    }
+
+    function showQuizResults() {
+        quizQuestionContainer.classList.remove('active');
+        quizResults.classList.add('active');
+
+        const resultsTitle = document.getElementById('quiz-results-title');
+        const resultsDesc = document.getElementById('quiz-results-desc');
+        const badgeAlert = document.getElementById('quiz-badge-unlock-alert');
+        const resultsSvg = document.getElementById('quiz-results-svg');
+
+        resultsDesc.textContent = `You scored ${quizScore} out of ${QUIZ_DATABASE.length} on the Climate Trivia challenge.`;
+
+        if (quizScore === QUIZ_DATABASE.length) {
+            resultsTitle.textContent = "Climate Scholar! Perfect Score 🌟";
+            resultsSvg.style.color = "var(--color-green)";
+            
+            // Unlock badge
+            if (!state.unlockedBadges.includes('trivia-scholar')) {
+                state.unlockedBadges.push('trivia-scholar');
+                saveState();
+                checkUnlockedBadges();
+                updateDashboardUI();
+            }
+            badgeAlert.classList.add('active');
+        } else if (quizScore >= 3) {
+            resultsTitle.textContent = "Green Enthusiast! Great Job 👍";
+            resultsSvg.style.color = "var(--energy-color)";
+            badgeAlert.classList.remove('active');
+        } else {
+            resultsTitle.textContent = "Keep Learning! 📚";
+            resultsSvg.style.color = "#ef4444";
+            badgeAlert.classList.remove('active');
+        }
+    }
+
+    // --- APPLICATION STARTUP ---
+    loadState();
+    bindInputs();
+    checkUnlockedBadges();
+    updateDashboardUI();
+    renderActionsMarketplace();
+    renderCommitmentsChecklist();
+    initSandboxState();
+    updateSandboxSimulation();
+    showWizardPanel(0);
+});
