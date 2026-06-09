@@ -62,9 +62,9 @@
         </header>
 
         <!-- NAVIGATION -->
-        <nav class="app-nav">
-            <button class="nav-btn active" data-tab="dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+        <nav class="app-nav" role="tablist" aria-label="Main Navigation">
+            <button class="nav-btn active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="dashboard" id="tab-dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon" aria-hidden="true">
                     <rect x="3" y="3" width="7" height="9"></rect>
                     <rect x="14" y="3" width="7" height="5"></rect>
                     <rect x="14" y="12" width="7" height="9"></rect>
@@ -72,8 +72,8 @@
                 </svg>
                 <span>Dashboard</span>
             </button>
-            <button class="nav-btn" data-tab="calculator">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+            <button class="nav-btn" data-tab="calculator" role="tab" aria-selected="false" aria-controls="calculator" id="tab-calculator">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon" aria-hidden="true">
                     <path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
                     <line x1="9" y1="9" x2="15" y2="9"></line>
                     <line x1="9" y1="13" x2="15" y2="13"></line>
@@ -81,23 +81,23 @@
                 </svg>
                 <span>Calculator</span>
             </button>
-            <button class="nav-btn" data-tab="actions">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+            <button class="nav-btn" data-tab="actions" role="tab" aria-selected="false" aria-controls="actions" id="tab-actions">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon" aria-hidden="true">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
                 <span>Action Plan</span>
             </button>
-            <button class="nav-btn" data-tab="sandbox">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+            <button class="nav-btn" data-tab="sandbox" role="tab" aria-selected="false" aria-controls="sandbox" id="tab-sandbox">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon" aria-hidden="true">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                     <path d="M2 17l10 5 10-5"></path>
                     <path d="M2 12l10 5 10-5"></path>
                 </svg>
                 <span>Simulator</span>
             </button>
-            <button class="nav-btn" data-tab="quiz">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+            <button class="nav-btn" data-tab="quiz" role="tab" aria-selected="false" aria-controls="quiz" id="tab-quiz">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -110,7 +110,7 @@
         <main class="app-content">
 
             <!-- DASHBOARD TAB -->
-            <section id="dashboard" class="tab-panel active">
+            <section id="dashboard" class="tab-panel active" role="tabpanel" aria-labelledby="tab-dashboard" tabindex="0" aria-hidden="false">
                 <div class="panel-header animate-fade-in" style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div>
                         <h1>Your Eco Dashboard</h1>
@@ -211,7 +211,7 @@
 
 
             <!-- CALCULATOR TAB -->
-            <section id="calculator" class="tab-panel">
+            <section id="calculator" class="tab-panel" role="tabpanel" aria-labelledby="tab-calculator" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
                     <h1>Carbon Calculator</h1>
                     <p>Input your typical daily and yearly habits to generate a custom breakdown of your carbon footprint.</p>
@@ -219,24 +219,24 @@
 
                 <div class="calculator-layout">
                     <!-- Wizard Tabs -->
-                    <div class="wizard-tabs">
-                        <button class="wizard-tab-btn active" data-wizard="transport">
+                    <div class="wizard-tabs" role="tablist" aria-label="Calculator Steps">
+                        <button class="wizard-tab-btn active" data-wizard="transport" role="tab" aria-selected="true" aria-controls="wizard-transport" id="tab-wizard-transport">
                             <span class="wizard-number">1</span>
                             <span class="wizard-title">Transportation</span>
                         </button>
-                        <button class="wizard-tab-btn" data-wizard="energy">
+                        <button class="wizard-tab-btn" data-wizard="energy" role="tab" aria-selected="false" aria-controls="wizard-energy" id="tab-wizard-energy">
                             <span class="wizard-number">2</span>
                             <span class="wizard-title">Home Energy</span>
                         </button>
-                        <button class="wizard-tab-btn" data-wizard="food">
+                        <button class="wizard-tab-btn" data-wizard="food" role="tab" aria-selected="false" aria-controls="wizard-food" id="tab-wizard-food">
                             <span class="wizard-number">3</span>
                             <span class="wizard-title">Food & Diet</span>
                         </button>
-                        <button class="wizard-tab-btn" data-wizard="waste">
+                        <button class="wizard-tab-btn" data-wizard="waste" role="tab" aria-selected="false" aria-controls="wizard-waste" id="tab-wizard-waste">
                             <span class="wizard-number">4</span>
                             <span class="wizard-title">Lifestyle & Waste</span>
                         </button>
-                        <button class="wizard-tab-btn" data-wizard="digital">
+                        <button class="wizard-tab-btn" data-wizard="digital" role="tab" aria-selected="false" aria-controls="wizard-digital" id="tab-wizard-digital">
                             <span class="wizard-number">5</span>
                             <span class="wizard-title">Digital Carbon</span>
                         </button>
@@ -245,43 +245,43 @@
                     <!-- Wizard Form Container -->
                     <div class="wizard-form glass-panel">
                         <!-- Transport Panel -->
-                        <div class="wizard-panel active" id="wizard-transport">
+                        <div class="wizard-panel active" id="wizard-transport" role="tabpanel" aria-labelledby="tab-wizard-transport" tabindex="0" aria-hidden="false">
                             <h2><span class="category-dot transport-accent-bg"></span>Transportation</h2>
                             <p class="panel-desc">Vehicles and travel are major drivers of emissions. Tell us how you get around.</p>
                             
                             <div class="form-group">
                                 <label class="input-label">Primary Car Fuel Type</label>
                                 <div class="radio-card-grid">
-                                    <label class="radio-card">
-                                        <input type="radio" name="car-fuel" value="gasoline" checked>
+                                    <label class="radio-card" for="car-fuel-gasoline">
+                                        <input type="radio" id="car-fuel-gasoline" name="car-fuel" value="gasoline" checked>
                                         <div class="radio-card-content">
                                             <span class="radio-title">Petrol / Gasoline</span>
                                             <span class="radio-desc">Standard combustion engine</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="car-fuel" value="diesel">
+                                    <label class="radio-card" for="car-fuel-diesel">
+                                        <input type="radio" id="car-fuel-diesel" name="car-fuel" value="diesel">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Diesel</span>
                                             <span class="radio-desc">Higher torque, high particulate</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="car-fuel" value="hybrid">
+                                    <label class="radio-card" for="car-fuel-hybrid">
+                                        <input type="radio" id="car-fuel-hybrid" name="car-fuel" value="hybrid">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Hybrid / Plug-in</span>
                                             <span class="radio-desc">Gasoline & electric assist</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="car-fuel" value="electric">
+                                    <label class="radio-card" for="car-fuel-electric">
+                                        <input type="radio" id="car-fuel-electric" name="car-fuel" value="electric">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Fully Electric (EV)</span>
                                             <span class="radio-desc">Zero tailpipe emissions</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="car-fuel" value="none">
+                                    <label class="radio-card" for="car-fuel-none">
+                                        <input type="radio" id="car-fuel-none" name="car-fuel" value="none">
                                         <div class="radio-card-content">
                                             <span class="radio-title">No Car</span>
                                             <span class="radio-desc">Walk, bike, or transit only</span>
@@ -339,7 +339,7 @@
                         </div>
 
                         <!-- Energy Panel -->
-                        <div class="wizard-panel" id="wizard-energy">
+                        <div class="wizard-panel" id="wizard-energy" role="tabpanel" aria-labelledby="tab-wizard-energy" tabindex="0" aria-hidden="true">
                             <h2><span class="category-dot energy-accent-bg"></span>Home Energy</h2>
                             <p class="panel-desc">Household electricity and heating contribute heavily to global emissions.</p>
 
@@ -376,29 +376,29 @@
                             <div class="form-group">
                                 <label class="input-label">Primary Heating Fuel Source</label>
                                 <div class="radio-card-grid three-col">
-                                    <label class="radio-card">
-                                        <input type="radio" name="heat-fuel" value="natural-gas" checked>
+                                    <label class="radio-card" for="heat-fuel-gas">
+                                        <input type="radio" id="heat-fuel-gas" name="heat-fuel" value="natural-gas" checked>
                                         <div class="radio-card-content">
                                             <span class="radio-title">Natural Gas</span>
                                             <span class="radio-desc">Fossil fuel utility line</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="heat-fuel" value="oil">
+                                    <label class="radio-card" for="heat-fuel-oil">
+                                        <input type="radio" id="heat-fuel-oil" name="heat-fuel" value="oil">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Heating Oil / LPG</span>
                                             <span class="radio-desc">Stored tank fuel</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="heat-fuel" value="electric">
+                                    <label class="radio-card" for="heat-fuel-electric">
+                                        <input type="radio" id="heat-fuel-electric" name="heat-fuel" value="electric">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Electricity / Heat Pump</span>
                                             <span class="radio-desc">Driven by grid connection</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="heat-fuel" value="biomass">
+                                    <label class="radio-card" for="heat-fuel-biomass">
+                                        <input type="radio" id="heat-fuel-biomass" name="heat-fuel" value="biomass">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Biomass / Wood</span>
                                             <span class="radio-desc">Wood pellets or logs</span>
@@ -424,36 +424,36 @@
                         </div>
 
                         <!-- Food Panel -->
-                        <div class="wizard-panel" id="wizard-food">
+                        <div class="wizard-panel" id="wizard-food" role="tabpanel" aria-labelledby="tab-wizard-food" tabindex="0" aria-hidden="true">
                             <h2><span class="category-dot food-accent-bg"></span>Food & Diet</h2>
                             <p class="panel-desc">Agriculture, livestock rearing, and food shipping have highly diverse carbon impacts.</p>
 
                             <div class="form-group">
                                 <label class="input-label">Diet Classification</label>
                                 <div class="radio-card-grid">
-                                    <label class="radio-card">
-                                        <input type="radio" name="diet" value="heavy-meat">
+                                    <label class="radio-card" for="diet-heavy-meat">
+                                        <input type="radio" id="diet-heavy-meat" name="diet" value="heavy-meat">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Heavy Meat Eater</span>
                                             <span class="radio-desc">Red meat in almost every meal</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="diet" value="average-meat" checked>
+                                    <label class="radio-card" for="diet-average-meat">
+                                        <input type="radio" id="diet-average-meat" name="diet" value="average-meat" checked>
                                         <div class="radio-card-content">
                                             <span class="radio-title">Average Meat Eater</span>
                                             <span class="radio-desc">Mix of poultry, pork, beef, vegetables</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="diet" value="vegetarian">
+                                    <label class="radio-card" for="diet-vegetarian">
+                                        <input type="radio" id="diet-vegetarian" name="diet" value="vegetarian">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Vegetarian</span>
                                             <span class="radio-desc">No meat, includes dairy and eggs</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="diet" value="vegan">
+                                    <label class="radio-card" for="diet-vegan">
+                                        <input type="radio" id="diet-vegan" name="diet" value="vegan">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Vegan</span>
                                             <span class="radio-desc">Fully plant-based, zero animal products</span>
@@ -480,22 +480,22 @@
                             <div class="form-group">
                                 <label class="input-label">Food Waste Behavior</label>
                                 <div class="radio-card-grid three-col">
-                                    <label class="radio-card">
-                                        <input type="radio" name="food-waste" value="minimal" checked>
+                                    <label class="radio-card" for="food-waste-minimal">
+                                        <input type="radio" id="food-waste-minimal" name="food-waste" value="minimal" checked>
                                         <div class="radio-card-content">
                                             <span class="radio-title">Minimal</span>
                                             <span class="radio-desc">Compost/Eat leftovers, rarely discard</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="food-waste" value="moderate">
+                                    <label class="radio-card" for="food-waste-moderate">
+                                        <input type="radio" id="food-waste-moderate" name="food-waste" value="moderate">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Moderate</span>
                                             <span class="radio-desc">Occasionally throw away expired food</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="food-waste" value="high">
+                                    <label class="radio-card" for="food-waste-high">
+                                        <input type="radio" id="food-waste-high" name="food-waste" value="high">
                                         <div class="radio-card-content">
                                             <span class="radio-title">High</span>
                                             <span class="radio-desc">Frequent waste, cook/buy in excess</span>
@@ -506,29 +506,29 @@
                         </div>
 
                         <!-- Waste Panel -->
-                        <div class="wizard-panel" id="wizard-waste">
+                        <div class="wizard-panel" id="wizard-waste" role="tabpanel" aria-labelledby="tab-wizard-waste" tabindex="0" aria-hidden="true">
                             <h2><span class="category-dot waste-accent-bg"></span>Lifestyle & Waste</h2>
                             <p class="panel-desc">Shopping habits, plastics, and recycling affect landfill emissions and supply chain impact.</p>
 
                             <div class="form-group">
                                 <label class="input-label">Shopping / Purchasing Frequency</label>
                                 <div class="radio-card-grid three-col">
-                                    <label class="radio-card">
-                                        <input type="radio" name="shopping" value="minimalist">
+                                    <label class="radio-card" for="shop-minimalist">
+                                        <input type="radio" id="shop-minimalist" name="shopping" value="minimalist">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Minimalist</span>
                                             <span class="radio-desc">Only essentials, eco-conscious purchases</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="shopping" value="average" checked>
+                                    <label class="radio-card" for="shop-average">
+                                        <input type="radio" id="shop-average" name="shopping" value="average" checked>
                                         <div class="radio-card-content">
                                             <span class="radio-title">Average</span>
                                             <span class="radio-desc">Standard consumer goods, seasonal updates</span>
                                         </div>
                                     </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="shopping" value="consumerist">
+                                    <label class="radio-card" for="shop-consumerist">
+                                        <input type="radio" id="shop-consumerist" name="shopping" value="consumerist">
                                         <div class="radio-card-content">
                                             <span class="radio-title">Consumerist</span>
                                             <span class="radio-desc">Frequent electronics/clothing, fast fashion</span>
@@ -540,25 +540,25 @@
                             <div class="form-group">
                                 <label class="input-label">Recycling Habits (Check all that apply)</label>
                                 <div class="checkbox-grid">
-                                    <label class="checkbox-card">
+                                    <label class="checkbox-card" for="recycle-paper">
                                         <input type="checkbox" id="recycle-paper" checked>
                                         <div class="checkbox-card-content">
                                             <span class="check-title">Paper & Cardboard</span>
                                         </div>
                                     </label>
-                                    <label class="checkbox-card">
+                                    <label class="checkbox-card" for="recycle-plastic">
                                         <input type="checkbox" id="recycle-plastic" checked>
                                         <div class="checkbox-card-content">
                                             <span class="check-title">Plastics & Bottles</span>
                                         </div>
                                     </label>
-                                    <label class="checkbox-card">
+                                    <label class="checkbox-card" for="recycle-glass">
                                         <input type="checkbox" id="recycle-glass">
                                         <div class="checkbox-card-content">
                                             <span class="check-title">Glass Jars/Containers</span>
                                         </div>
                                     </label>
-                                    <label class="checkbox-card">
+                                    <label class="checkbox-card" for="recycle-metal">
                                         <input type="checkbox" id="recycle-metal">
                                         <div class="checkbox-card-content">
                                             <span class="check-title">Metal Cans & Foil</span>
@@ -569,7 +569,7 @@
                         </div>
 
                         <!-- Digital Carbon Panel -->
-                        <div class="wizard-panel" id="wizard-digital">
+                        <div class="wizard-panel" id="wizard-digital" role="tabpanel" aria-labelledby="tab-wizard-digital" tabindex="0" aria-hidden="true">
                             <h2><span class="category-dot transport-accent-bg"></span>Digital Carbon & Website Checker</h2>
                             <p class="panel-desc">Streaming, browsing, and video calls run on massive data centers. Estimate your digital footprints and analyze website carbon weight.</p>
                             
@@ -603,10 +603,10 @@
                                 <h3>Website Carbon Analyzer</h3>
                                 <p class="panel-desc">Enter any website URL to calculate its simulated size and carbon emissions per visit.</p>
                                 <div class="checker-input-group" style="position: relative;">
-                                    <div class="feature-lock-overlay" id="web-checker-lock" onclick="document.getElementById('auth-modal-btn').click()">
+                                    <div class="feature-lock-overlay" id="web-checker-lock">
                                         <span>🔒 Login to Analyze</span>
                                     </div>
-                                    <input type="url" id="web-checker-url" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com">
+                                    <input type="url" id="web-checker-url" aria-label="Website URL to analyze" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com">
                                     <button id="web-checker-btn" class="primary-btn">Analyze URL</button>
                                 </div>
                                 <div id="web-checker-results" class="checker-results-grid hidden">
@@ -651,7 +651,7 @@
 
 
             <!-- ACTIONS TAB -->
-            <section id="actions" class="tab-panel">
+            <section id="actions" class="tab-panel" role="tabpanel" aria-labelledby="tab-actions" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
                     <h1>Personalized Action Plan</h1>
                     <p>Build a green checklist. Select actions, track your weekly achievements, and witness your direct carbon reductions.</p>
@@ -705,7 +705,7 @@
 
 
             <!-- SIMULATOR TAB -->
-            <section id="sandbox" class="tab-panel">
+            <section id="sandbox" class="tab-panel" role="tabpanel" aria-labelledby="tab-sandbox" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
                     <h1>"What-If" Sandbox Simulator</h1>
                     <p>Toggle future life changes in real-time to simulate their compounding impact on your carbon emissions.</p>
@@ -718,7 +718,7 @@
                         <p class="panel-desc">Check or uncheck these systemic or lifestyle choices to observe the carbon variance:</p>
                         
                         <div class="sandbox-switches">
-                            <label class="switch-card">
+                            <label class="switch-card" for="sim-solar">
                                 <div class="switch-card-info">
                                     <span class="switch-title">Switch to Solar Power</span>
                                     <span class="switch-desc">Install rooftop panels (Reduces residential electric emissions by 90%)</span>
@@ -729,7 +729,7 @@
                                 </div>
                             </label>
                             
-                            <label class="switch-card">
+                            <label class="switch-card" for="sim-vegan">
                                 <div class="switch-card-info">
                                     <span class="switch-title">Go Fully Plant-Based</span>
                                     <span class="switch-desc">Switch diet to 100% vegan ingredients (Reduces diet emissions by ~55%)</span>
@@ -740,7 +740,7 @@
                                 </div>
                             </label>
 
-                            <label class="switch-card">
+                            <label class="switch-card" for="sim-ev">
                                 <div class="switch-card-info">
                                     <span class="switch-title">Acquire an Electric Vehicle</span>
                                     <span class="switch-desc">Replace gasoline car with an EV (Reduces car transport footprint by 75%)</span>
@@ -751,7 +751,7 @@
                                 </div>
                             </label>
 
-                            <label class="switch-card">
+                            <label class="switch-card" for="sim-flights">
                                 <div class="switch-card-info">
                                     <span class="switch-title">Halve Your Flights</span>
                                     <span class="switch-desc">Reduce long and short flight frequency by 50%</span>
@@ -762,7 +762,7 @@
                                 </div>
                             </label>
 
-                            <label class="switch-card">
+                            <label class="switch-card" for="sim-waste">
                                 <div class="switch-card-info">
                                     <span class="switch-title">Zero Waste Hero</span>
                                     <span class="switch-desc">Completely eliminate single-use plastics & fully compost organics</span>
@@ -829,7 +829,7 @@
 
 
             <!-- CLIMATE TRIVIA TAB -->
-            <section id="quiz" class="tab-panel">
+            <section id="quiz" class="tab-panel" role="tabpanel" aria-labelledby="tab-quiz" tabindex="0" aria-hidden="true">
                 <div class="panel-header">
                     <h1>Climate Trivia</h1>
                     <p>Test your environmental awareness. High scorers earn the "Trivia Scholar" badge!</p>
@@ -951,10 +951,10 @@
             </div>
 
             <form id="chatbot-input-form" class="chatbot-form-area" style="position: relative;">
-                <div class="feature-lock-overlay" id="chatbot-lock" onclick="document.getElementById('auth-modal-btn').click()">
+                <div class="feature-lock-overlay" id="chatbot-lock">
                     <span>🔒 Login to Chat</span>
                 </div>
-                <input type="text" id="chatbot-input-field" placeholder="Ask EcoBot anything..." required autocomplete="off">
+                <input type="text" id="chatbot-input-field" aria-label="Message to EcoBot" placeholder="Ask EcoBot anything..." required autocomplete="off">
                 <button type="submit" class="primary-btn chat-send-btn">Send</button>
             </form>
         </div>
@@ -962,7 +962,7 @@
         <!-- AUTHENTICATION MODAL -->
         <div id="auth-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel">
-                <button class="modal-close" id="close-auth-modal">&times;</button>
+                <button class="modal-close" id="close-auth-modal" aria-label="Close auth modal">&times;</button>
                 <div class="auth-tabs">
                     <button class="auth-tab active" data-auth-mode="login">Login</button>
                     <button class="auth-tab" data-auth-mode="register">Sign Up</button>

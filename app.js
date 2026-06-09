@@ -331,12 +331,22 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const targetTab = btn.getAttribute('data-tab');
             
-            navButtons.forEach(b => b.classList.remove('active'));
-            tabPanels.forEach(p => p.classList.remove('active'));
+            navButtons.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            tabPanels.forEach(p => {
+                p.classList.remove('active');
+                p.setAttribute('aria-hidden', 'true');
+            });
             
             btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
             const targetEl = document.getElementById(targetTab);
-            if (targetEl) targetEl.classList.add('active');
+            if (targetEl) {
+                targetEl.classList.add('active');
+                targetEl.setAttribute('aria-hidden', 'false');
+            }
 
             if (targetTab === 'dashboard') {
                 updateDashboardCharts();
@@ -384,10 +394,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function showWizardPanel(index) {
         currentWizardIndex = index;
         wizardPanels.forEach((panel, i) => {
-            panel.classList.toggle('active', i === index);
+            const isActive = i === index;
+            panel.classList.toggle('active', isActive);
+            panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         });
         wizardTabBtns.forEach((btn, i) => {
-            btn.classList.toggle('active', i === index);
+            const isActive = i === index;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
         wizardDots.forEach((dot, i) => {
             dot.classList.toggle('active', i === index);
@@ -634,7 +648,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEW: Website Carbon Analyzer Button
         const checkerBtn = document.getElementById('web-checker-btn');
-        checkerBtn.addEventListener('click', runWebChecker);
+        if (checkerBtn) checkerBtn.addEventListener('click', runWebChecker);
+
+        // Bind Premium Feature Lock Overlays to trigger Auth modal
+        const webLock = document.getElementById('web-checker-lock');
+        if (webLock) {
+            webLock.addEventListener('click', () => {
+                const authBtn = document.getElementById('auth-modal-btn');
+                if (authBtn) authBtn.click();
+            });
+        }
+        const chatLock = document.getElementById('chatbot-lock');
+        if (chatLock) {
+            chatLock.addEventListener('click', () => {
+                const authBtn = document.getElementById('auth-modal-btn');
+                if (authBtn) authBtn.click();
+            });
+        }
     }
 
     function onInputsChange() {

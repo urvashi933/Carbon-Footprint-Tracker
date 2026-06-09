@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 // Load environment variables
 dotenv.config();
@@ -9,9 +12,33 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable Security Headers (Helmet)
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https://*"],
+            connectSrc: ["'self'"]
+        }
+    }
+}));
+
 // Enable CORS and body parsers
 app.use(cors());
 app.use(express.json());
+
+// Enable Rate Limiting on API endpoints
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Relax limits during tests
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+app.use('/api/', apiLimiter);
 
 // Serve static frontend files directly from root
 app.use(express.static(__dirname));
@@ -23,12 +50,16 @@ const jwt = require('jsonwebtoken');
 const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hack2skill_super_secret_key';
+// Secure fallback secret generated dynamically at runtime to prevent static analysis flags
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 let db;
 async function initDB() {
+    const dbPath = process.env.NODE_ENV === 'test'
+        ? path.join(__dirname, 'database.test.sqlite')
+        : path.join(__dirname, 'database.sqlite');
     db = await open({
-        filename: path.join(__dirname, 'database.sqlite'),
+        filename: dbPath,
         driver: sqlite3.Database
     });
     await db.exec(`
@@ -39,9 +70,11 @@ async function initDB() {
             progress TEXT
         )
     `);
-    console.log("Database initialized");
+    console.log(`Database initialized: ${dbPath}`);
 }
-initDB().catch(console.error);
+if (process.env.NODE_ENV !== 'test') {
+    initDB().catch(console.error);
+}
 
 // Auth Middleware
 function authenticateToken(req, res, next) {
@@ -61,17 +94,34 @@ app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
+    if (typeof username !== 'string' || typeof password !== 'string') {
+        return res.status(400).json({ error: 'Username and password must be strings' });
+    }
+
+    const trimmedUsername = username.trim();
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+        return res.status(400).json({ error: 'Username must be between 3 and 30 characters' });
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+        return res.status(400).json({ error: 'Username must contain only alphanumeric characters, underscores, or hyphens' });
+    }
+
+    if (password.length < 6 || password.length > 72) {
+        return res.status(400).json({ error: 'Password must be between 6 and 72 characters' });
+    }
+
     try {
-        const existing = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+        const existing = await db.get('SELECT * FROM users WHERE username = ?', [trimmedUsername]);
         if (existing) {
             return res.status(400).json({ error: 'User already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await db.run('INSERT INTO users (username, password, progress) VALUES (?, ?, ?)', [username, hashedPassword, '{}']);
+        const result = await db.run('INSERT INTO users (username, password, progress) VALUES (?, ?, ?)', [trimmedUsername, hashedPassword, '{}']);
 
-        const token = jwt.sign({ id: result.lastID, username }, JWT_SECRET, { expiresIn: '24h' });
-        res.json({ token, username });
+        const token = jwt.sign({ id: result.lastID, username: trimmedUsername }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ token, username: trimmedUsername });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal server error' });
@@ -80,14 +130,20 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+    if (typeof username !== 'string' || typeof password !== 'string') {
+        return res.status(400).json({ error: 'Username and password must be strings' });
+    }
+
     try {
-        const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+        const user = await db.get('SELECT * FROM users WHERE username = ?', [username.trim()]);
         if (!user) return res.status(400).json({ error: 'User not found' });
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, username }, JWT_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
         const progressObj = user.progress ? JSON.parse(user.progress) : {};
         res.json({ token, username, progress: progressObj });
     } catch (e) {
@@ -320,8 +376,30 @@ function generateLocalMockReply(text, stats) {
 }
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`========================================================`);
-    console.log(` EcoTrace Server running at http://localhost:${PORT} `);
-    console.log(`========================================================`);
-});
+// Graceful shutdown
+async function gracefulShutdown() {
+    console.log('Shutting down gracefully...');
+    if (db) {
+        try {
+            await db.close();
+            console.log('Database connection closed.');
+        } catch (err) {
+            console.error('Error closing database:', err);
+        }
+    }
+    process.exit(0);
+}
+
+// Start Server (only if executed directly, to allow testing)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`========================================================`);
+        console.log(` EcoTrace Server running at http://localhost:${PORT} `);
+        console.log(`========================================================`);
+    });
+
+    process.on('SIGINT', gracefulShutdown);
+    process.on('SIGTERM', gracefulShutdown);
+}
+
+module.exports = { app, initDB, getDB: () => db, gracefulShutdown };

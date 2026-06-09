@@ -7,8 +7,6 @@ This document presents the detailed walkthrough of these newly implemented dynam
 ---
 
 ## Interactive Walkthrough Assets
-
-### 1. Dynamic Backend Verification
 Our automated browser tests successfully navigated to the local backend at `http://localhost:3000` and verified that the Website Carbon Analyzer fetched live calculation results using the Node.js API:
 
 ![Website Analyzer Live API Results](assets/website_analyzer_results.png)

@@ -2199,3 +2199,15 @@ body.dark-theme .prompt-chip:hover {
 .feature-lock-overlay.hidden {
     display: none;
 }
+
+/* Keyboard Navigation focus indicators for improved accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.range-slider:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+    outline: 3px solid var(--color-green);
+    outline-offset: 2px;
+}
