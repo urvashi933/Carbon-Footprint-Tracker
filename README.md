@@ -11,7 +11,7 @@ With advanced carbon visualization charts, a gamified badge reward system, a per
 ### 1. Interactive Application Walkthrough
 Observe the wizard calculation updates, simulator tree plotter, and chatbot responses in the animation below:
 
-![EcoTrace Chatbot & Website Checker Demo Video](assets/chatbot_web_demo.webp)
+![EcoTrace Chatbot & Website Checker Demo Video](assets/dynamic_backend_verification.webp)
 
 ### 2. Main Dashboard & Emissions Chart
 The visual dashboard renders a doughnut category distribution and comparative bar graph using Chart.js:
