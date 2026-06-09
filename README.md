@@ -8,17 +8,22 @@ With advanced carbon visualization charts, a gamified badge reward system, a per
 
 ## 📸 Media Walkthrough
 
-### 1. Interactive Application Walkthrough
+### 1. Dynamic Backend Verification
+Our automated browser tests successfully navigated to the local backend at `http://localhost:3000` and verified that the Website Carbon Analyzer fetches live evaluation results using the Node.js API:
+
+![Website Analyzer Live API Results](assets/website_analyzer_results.png)
+
+### 2. Interactive Application Walkthrough
 Observe the wizard calculation updates, simulator tree plotter, and chatbot responses in the animation below:
 
 ![EcoTrace Chatbot & Website Checker Demo Video](assets/dynamic_backend_verification.webp)
 
-### 2. Main Dashboard & Emissions Chart
+### 3. Main Dashboard & Emissions Chart
 The visual dashboard renders a doughnut category distribution and comparative bar graph using Chart.js:
 
 ![EcoTrace Dashboard View](assets/dashboard_view.png)
 
-### 3. Floating EcoBot AI Assistant Chatbot
+### 4. Floating EcoBot AI Assistant Chatbot
 EcoBot parses the user's active calculator emissions to offer targeted tips:
 
 ![EcoBot Assistant Conversation](assets/chatbot_conversation.png)
