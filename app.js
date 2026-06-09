@@ -1608,3 +1608,257 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 4000);
 });
+
+// ==========================================
+// AUTHENTICATION & CLOUD SAVE MODULE
+// ==========================================
+const authModalBtn = document.getElementById('auth-modal-btn');
+const authModal = document.getElementById('auth-modal');
+const closeAuthModal = document.getElementById('close-auth-modal');
+const authTabs = document.querySelectorAll('.auth-tab');
+const authForm = document.getElementById('auth-form');
+const authModalTitle = document.getElementById('auth-modal-title');
+const authErrorMsg = document.getElementById('auth-error-msg');
+const authUsername = document.getElementById('auth-username');
+const authPassword = document.getElementById('auth-password');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+
+const userProfile = document.getElementById('user-profile');
+const userNameDisplay = document.getElementById('user-name-display');
+const logoutBtn = document.getElementById('logout-btn');
+const saveProgressBtn = document.getElementById('save-progress-btn');
+
+let currentAuthMode = 'login'; // 'login' or 'register'
+let authToken = localStorage.getItem('ecotrace_token');
+let currentUsername = localStorage.getItem('ecotrace_username');
+
+// Initialize Auth State
+function initAuth() {
+    if (authToken && currentUsername) {
+        setLoggedInState(currentUsername);
+        loadProgress();
+    }
+}
+
+// UI Toggles
+authModalBtn.addEventListener('click', () => {
+    authModal.classList.remove('hidden');
+    authErrorMsg.classList.add('hidden');
+});
+closeAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
+
+authTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+        authTabs.forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        currentAuthMode = e.target.dataset.authMode;
+        
+        authModalTitle.textContent = currentAuthMode === 'login' ? 'Welcome Back' : 'Create Account';
+        authSubmitBtn.textContent = currentAuthMode === 'login' ? 'Login' : 'Sign Up';
+        authErrorMsg.classList.add('hidden');
+    });
+});
+
+// Form Submission
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = authUsername.value.trim();
+    const password = authPassword.value;
+    
+    if (!username || !password) return;
+    
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = 'Processing...';
+    
+    try {
+        const endpoint = currentAuthMode === 'login' ? '/api/login' : '/api/register';
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Authentication failed');
+        
+        // Success
+        authToken = data.token;
+        currentUsername = data.username;
+        localStorage.setItem('ecotrace_token', authToken);
+        localStorage.setItem('ecotrace_username', currentUsername);
+        
+        setLoggedInState(currentUsername);
+        authModal.classList.add('hidden');
+        
+        if (currentAuthMode === 'login' && data.progress) {
+            applyProgressToUI(data.progress);
+        }
+    } catch (err) {
+        authErrorMsg.textContent = err.message;
+        authErrorMsg.classList.remove('hidden');
+    } finally {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = currentAuthMode === 'login' ? 'Login' : 'Sign Up';
+    }
+});
+
+// Logout
+logoutBtn.addEventListener('click', () => {
+    authToken = null;
+    currentUsername = null;
+    localStorage.removeItem('ecotrace_token');
+    localStorage.removeItem('ecotrace_username');
+    
+    authModalBtn.classList.remove('hidden');
+    userProfile.classList.add('hidden');
+    saveProgressBtn.classList.add('hidden');
+});
+
+// Logged In UI State
+function setLoggedInState(username) {
+    authModalBtn.classList.add('hidden');
+    userProfile.classList.remove('hidden');
+    saveProgressBtn.classList.remove('hidden');
+    userNameDisplay.textContent = username;
+}
+
+// --- SAVE & LOAD PROGRESS LOGIC ---
+saveProgressBtn.addEventListener('click', async () => {
+    if (!authToken) return;
+    
+    const originalText = saveProgressBtn.innerHTML;
+    saveProgressBtn.innerHTML = 'Saving...';
+    
+    try {
+        const progressData = {
+            sliders: {
+                carDistance: document.getElementById('car-distance').value,
+                transitTime: document.getElementById('transit-time').value,
+                flightsShort: document.getElementById('flights-short').value,
+                flightsLong: document.getElementById('flights-long').value,
+                electricity: document.getElementById('electricity').value,
+                cleanMix: document.getElementById('clean-mix').value,
+                heatingEnergy: document.getElementById('heating-energy').value,
+                localSourcing: document.getElementById('local-sourcing').value,
+                digitalStreaming: document.getElementById('digital-streaming').value,
+                digitalMeeting: document.getElementById('digital-meeting').value,
+                digitalScrolling: document.getElementById('digital-scrolling').value
+            },
+            radios: {
+                carFuel: document.querySelector('input[name="car-fuel"]:checked').value,
+                heatFuel: document.querySelector('input[name="heat-fuel"]:checked').value,
+                diet: document.querySelector('input[name="diet"]:checked').value,
+                foodWaste: document.querySelector('input[name="food-waste"]:checked').value,
+                shopping: document.querySelector('input[name="shopping"]:checked').value
+            },
+            checkboxes: {
+                recyclePaper: document.getElementById('recycle-paper').checked,
+                recyclePlastic: document.getElementById('recycle-plastic').checked,
+                recycleGlass: document.getElementById('recycle-glass').checked,
+                recycleMetal: document.getElementById('recycle-metal').checked
+            },
+            activeActions: Array.from(document.querySelectorAll('#actions-marketplace-grid .secondary-btn.active')).map(btn => btn.dataset.actionId)
+        };
+
+        const res = await fetch('/api/save-progress', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken
+            },
+            body: JSON.stringify({ progress: progressData })
+        });
+        
+        if (!res.ok) throw new Error('Save failed');
+        saveProgressBtn.innerHTML = 'Saved!';
+    } catch (e) {
+        console.error('Failed to save progress:', e);
+        saveProgressBtn.innerHTML = 'Error Saving';
+    } finally {
+        setTimeout(() => { saveProgressBtn.innerHTML = originalText; }, 2000);
+    }
+});
+
+async function loadProgress() {
+    try {
+        const res = await fetch('/api/load-progress', {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (!res.ok) throw new Error('Load failed');
+        const data = await res.json();
+        
+        if (data.progress && Object.keys(data.progress).length > 0) {
+            applyProgressToUI(data.progress);
+        }
+    } catch (e) {
+        console.error('Failed to load progress:', e);
+    }
+}
+
+function applyProgressToUI(progress) {
+    if (!progress) return;
+    
+    // Sliders
+    if (progress.sliders) {
+        document.getElementById('car-distance').value = progress.sliders.carDistance || 12000;
+        document.getElementById('transit-time').value = progress.sliders.transitTime || 3;
+        document.getElementById('flights-short').value = progress.sliders.flightsShort || 2;
+        document.getElementById('flights-long').value = progress.sliders.flightsLong || 0;
+        document.getElementById('electricity').value = progress.sliders.electricity || 300;
+        document.getElementById('clean-mix').value = progress.sliders.cleanMix || 10;
+        document.getElementById('heating-energy').value = progress.sliders.heatingEnergy || 400;
+        document.getElementById('local-sourcing').value = progress.sliders.localSourcing || 20;
+        document.getElementById('digital-streaming').value = progress.sliders.digitalStreaming || 10;
+        document.getElementById('digital-meeting').value = progress.sliders.digitalMeeting || 5;
+        document.getElementById('digital-scrolling').value = progress.sliders.digitalScrolling || 2;
+    }
+    
+    // Radios
+    if (progress.radios) {
+        if(progress.radios.carFuel) document.querySelector('input[name="car-fuel"][value="' + progress.radios.carFuel + '"]').checked = true;
+        if(progress.radios.heatFuel) document.querySelector('input[name="heat-fuel"][value="' + progress.radios.heatFuel + '"]').checked = true;
+        if(progress.radios.diet) document.querySelector('input[name="diet"][value="' + progress.radios.diet + '"]').checked = true;
+        if(progress.radios.foodWaste) document.querySelector('input[name="food-waste"][value="' + progress.radios.foodWaste + '"]').checked = true;
+        if(progress.radios.shopping) document.querySelector('input[name="shopping"][value="' + progress.radios.shopping + '"]').checked = true;
+    }
+    
+    // Checkboxes
+    if (progress.checkboxes) {
+        document.getElementById('recycle-paper').checked = progress.checkboxes.recyclePaper;
+        document.getElementById('recycle-plastic').checked = progress.checkboxes.recyclePlastic;
+        document.getElementById('recycle-glass').checked = progress.checkboxes.recycleGlass;
+        document.getElementById('recycle-metal').checked = progress.checkboxes.recycleMetal;
+    }
+    
+    // Update all visual sliders numbers
+    document.getElementById('car-distance-val').textContent = parseInt(document.getElementById('car-distance').value).toLocaleString() + ' km';
+    document.getElementById('transit-time-val').textContent = document.getElementById('transit-time').value + ' hours';
+    document.getElementById('flights-short-val').textContent = document.getElementById('flights-short').value + ' flights/yr';
+    document.getElementById('flights-long-val').textContent = document.getElementById('flights-long').value + ' flights/yr';
+    document.getElementById('electricity-val').textContent = document.getElementById('electricity').value + ' kWh';
+    document.getElementById('clean-mix-val').textContent = document.getElementById('clean-mix').value + '%';
+    document.getElementById('heating-energy-val').textContent = document.getElementById('heating-energy').value + ' kWh';
+    document.getElementById('local-sourcing-val').textContent = document.getElementById('local-sourcing').value + '%';
+    document.getElementById('digital-streaming-val').textContent = document.getElementById('digital-streaming').value + ' hours';
+    document.getElementById('digital-meeting-val').textContent = document.getElementById('digital-meeting').value + ' hours';
+    document.getElementById('digital-scrolling-val').textContent = document.getElementById('digital-scrolling').value + ' hours';
+
+    // Recalculate
+    calculateFootprint();
+    
+    // Restore Active Actions
+    if (progress.activeActions && Array.isArray(progress.activeActions)) {
+        setTimeout(() => {
+            progress.activeActions.forEach(actionId => {
+                const btn = document.querySelector('#actions-marketplace-grid .secondary-btn[data-action-id="' + actionId + '"]');
+                if (btn && !btn.classList.contains('active')) {
+                    btn.click();
+                }
+            });
+        }, 500);
+    }
+}
+
+// Call on startup
+initAuth();
