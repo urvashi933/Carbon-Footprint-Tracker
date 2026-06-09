@@ -147,8 +147,11 @@ const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('he
 
 let db;
 async function initDB() {
-    const dbPath = process.env.NODE_ENV === 'test'
-        ? path.join(__dirname, 'database.test.sqlite')
+   // Update the dbPath to use the /tmp directory when deployed
+const dbPath = process.env.NODE_ENV === 'test'
+    ? path.join(__dirname, 'database.test.sqlite')
+    : process.env.VERCEL // Check if running on Vercel
+        ? path.join('/tmp', 'database.sqlite') 
         : path.join(__dirname, 'database.sqlite');
     db = await open({
         filename: dbPath,
@@ -511,4 +514,4 @@ if (require.main === module) {
     process.on('SIGTERM', gracefulShutdown);
 }
 
-module.exports = { app, initDB, getDB: () => db, gracefulShutdown };
+module.exports = app;
