@@ -145,27 +145,37 @@ const { open } = require('sqlite');
 // Secure fallback secret generated dynamically at runtime to prevent static analysis flags
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
-let db;
+let db = null;
+
 async function initDB() {
-   // Update the dbPath to use the /tmp directory when deployed
-const dbPath = process.env.NODE_ENV === 'test'
-    ? path.join(__dirname, 'database.test.sqlite')
-    : process.env.VERCEL // Check if running on Vercel
-        ? path.join('/tmp', 'database.sqlite') 
-        : path.join(__dirname, 'database.sqlite');
-    db = await open({
-        filename: dbPath,
-        driver: sqlite3.Database
-    });
-    await db.exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            progress TEXT
-        )
-    `);
-    console.log(`Database initialized: ${dbPath}`);
+    try {
+        // ADD THEM HERE INSTEAD:
+        const sqlite3 = require('sqlite3').verbose();
+        const { open } = require('sqlite');
+
+        const dbPath = process.env.NODE_ENV === 'test'
+            ? path.join(__dirname, 'database.test.sqlite')
+            : process.env.VERCEL 
+                ? path.join('/tmp', 'database.sqlite') 
+                : path.join(__dirname, 'database.sqlite');
+                
+        db = await open({
+            filename: dbPath,
+            driver: sqlite3.Database
+        });
+        
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                progress TEXT
+            )
+        `);
+        console.log(`Database initialized: ${dbPath}`);
+    } catch (error) {
+        console.error("CRITICAL: Failed to initialize SQLite database.", error.message);
+    }
 }
 if (process.env.NODE_ENV !== 'test') {
     initDB().catch(console.error);
