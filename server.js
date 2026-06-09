@@ -27,6 +27,10 @@ console.log("=============================");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// === ADD THIS LINE RIGHT HERE ===
+// Tells Express to trust Vercel's reverse proxy headers
+app.set('trust proxy', 1);
+
 // Enable Security Headers (Helmet)
 app.use(helmet({
     contentSecurityPolicy: {
