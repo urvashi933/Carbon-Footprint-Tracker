@@ -1,0 +1,21 @@
+{
+  "name": "carbon-footprint-tracker",
+  "version": "1.0.0",
+  "description": "EcoTrace Carbon Footprint Awareness and Tracking Platform",
+  "main": "index.html",
+  "scripts": {
+    "dev": "lite-server"
+  },
+  "keywords": [
+    "carbon",
+    "footprint",
+    "tracker",
+    "sustainability",
+    "climate"
+  ],
+  "author": "EcoTrace Developers",
+  "license": "MIT",
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  }
+}

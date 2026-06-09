@@ -1,0 +1,3 @@
+# EcoTrace is a static client-side frontend application (HTML5/CSS3/Vanilla JS).
+# It does not require a Python backend or python dependencies.
+# Node.js dev server dependencies are configured in package.json.

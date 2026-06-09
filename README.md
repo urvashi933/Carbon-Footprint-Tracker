@@ -1,0 +1,104 @@
+# EcoTrace 🌱 | Carbon Footprint Awareness Platform
+
+**EcoTrace** is a premium, client-side, interactive Single-Page Application (SPA) designed to help individuals calculate, track, visualize, and reduce their carbon footprint. 
+
+With advanced carbon visualization charts, a gamified badge reward system, a personalized habit checklist, an interactive "What-If" sandbox simulator, a simulated Website Carbon Analyzer, and an intelligent EcoBot climate chatbot, EcoTrace turns sustainability tracking into an engaging, gamified experience.
+
+---
+
+## 📸 Media Walkthrough
+
+### 1. Interactive Application Walkthrough
+Observe the wizard calculation updates, simulator tree plotter, and chatbot responses in the animation below:
+
+![EcoTrace Chatbot & Website Checker Demo Video](assets/chatbot_web_demo.webp)
+
+### 2. Main Dashboard & Emissions Chart
+The visual dashboard renders a doughnut category distribution and comparative bar graph using Chart.js:
+
+![EcoTrace Dashboard View](assets/dashboard_view.png)
+
+### 3. Floating EcoBot AI Assistant Chatbot
+EcoBot parses the user's active calculator emissions to offer targeted tips:
+
+![EcoBot Assistant Conversation](assets/chatbot_conversation.png)
+
+---
+
+## ⚡ Key Features
+
+1. **Step-by-Step Carbon Calculator Wizard**: Detailed inputs across 5 categories: Transportation, Home Energy, Food & Diet, Lifestyle & Waste, and Digital Carbon.
+2. **Interactive Visual Dashboard**: Instant feedback using Chart.js doughnut and horizontal comparison bars.
+3. **Achievements & Badges**: 7 unlockable badges (e.g., *Green Citizen*, *Eco Warrior*, *Solar Saver*, *Trivia Scholar*) that dynamically highlight on completion.
+4. **Action Planner & Weekly Habits**: Committable reduction habits linked to a progress bar checklist to measure annual CO₂ offset.
+5. **What-If Sandbox Simulator**: Toggles for systemic adjustments (solar panels, EV, plant-based diet) that render visual tree growth plots (1 tree absorbs 22 kg CO₂/yr).
+6. **Website Carbon Checker**: Simulates auditing web page URL resource payloads and yields an Eco Grade (A+ to F).
+7. **EcoBot Climate Chatbot**: A floating assistant that inspects your actual statistics to suggest context-rich tips and answers general environmental questions.
+
+---
+
+## 🧪 Scientific Calculation Model
+
+Emissions are estimated using standardized greenhouse gas coefficients (EPA and DEFRA):
+
+| Sector | Parameter / Action | Coefficient Applied |
+| :--- | :--- | :--- |
+| **Transportation** | Gasoline Car | $0.18\text{ kg CO}_2 / \text{km}$ |
+| | Diesel Car | $0.17\text{ kg CO}_2 / \text{km}$ |
+| | Hybrid / Plug-in | $0.10\text{ kg CO}_2 / \text{km}$ |
+| | Electric Vehicle (EV) | $0.04\text{ kg CO}_2 / \text{km}$ (grid electricity load) |
+| | Public Transit (Bus/Train) | $0.0624\text{ Tons CO}_2 / \text{weekly hour per year}$ |
+| | Short Flights ($< 3\text{ hrs}$) | $0.15\text{ Tons CO}_2 / \text{flight}$ |
+| | Long Flights ($> 3\text{ hrs}$) | $0.80\text{ Tons CO}_2 / \text{flight}$ |
+| **Home Energy** | Grid Electricity | $0.35\text{ kg CO}_2 / \text{kWh}$ (adjusted by Clean Mix%) |
+| | Natural Gas Heating | $0.00020\text{ Tons CO}_2 / \text{kWh}$ |
+| | Heating Oil | $0.00027\text{ Tons CO}_2 / \text{kWh}$ |
+| | Biomass (Wood Pellets) | $0.00003\text{ Tons CO}_2 / \text{kWh}$ |
+| **Food & Diet** | Heavy Meat Eater | $3.2\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Average Meat Eater | $2.2\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Vegetarian | $1.5\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Vegan | $0.9\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Local Sourcing Ratio | Up to $15\%$ diet offset discount |
+| | Food Waste Behavior | Minimal ($0\text{ t}$), Moderate ($0.15\text{ t}$), High ($0.40\text{ t}$) penalties |
+| **Lifestyle & Waste**| Minimalist Shopping | $0.3\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Average Shopping | $0.8\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Consumerist Shopping | $2.2\text{ Tons CO}_2 / \text{year}$ baseline |
+| | Recycling Credits | Paper ($-0.08\text{ t}$), Plastic ($-0.12\text{ t}$), Glass ($-0.06\text{ t}$), Metal ($-0.09\text{ t}$) |
+| **Digital Carbon** | Video Streaming | $0.18\text{ kg CO}_2 / \text{hour}$ |
+| | Video Calls | $0.12\text{ kg CO}_2 / \text{hour}$ |
+| | Scrolling & Gaming | $0.05\text{ kg CO}_2 / \text{hour}$ |
+
+---
+
+## 🚀 Getting Started
+
+Since EcoTrace runs client-side, you can open `index.html` directly in a web browser. Alternatively, follow the steps below to run a local dev server or serve using Docker.
+
+### Running Locally (lite-server)
+1. Ensure [Node.js](https://nodejs.org/) is installed.
+2. Install the required development server:
+   ```bash
+   npm install
+   ```
+3. Boot the local server:
+   ```bash
+   npm run dev
+   ```
+4. Access the web page at: `http://localhost:3000`
+
+### Running via Docker
+1. Build the Docker container:
+   ```bash
+   docker build -t ecotrace .
+   ```
+2. Run the container:
+   ```bash
+   docker run -d -p 8080:80 ecotrace
+   ```
+3. Open `http://localhost:8080` in your web browser.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
