@@ -32,8 +32,6 @@ EcoBot parses the user's active calculator emissions to offer targeted tips:
 
 ## ⚡ Key Features
 
-## ⚡ Key Features
-
 1. **Step-by-Step Carbon Calculator Wizard**: Detailed inputs across 5 categories: Transportation, Home Energy, Food & Diet, Lifestyle & Waste, and Digital Carbon.
 
 2. **Interactive Visual Dashboard**: Instant carbon breakdown feedback using Chart.js doughnut and horizontal comparison bars.
