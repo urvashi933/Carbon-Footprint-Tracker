@@ -72,30 +72,38 @@ Emissions are estimated using standardized greenhouse gas coefficients (EPA and 
 
 ## 🚀 Getting Started
 
-Since EcoTrace runs client-side, you can open `index.html` directly in a web browser. Alternatively, follow the steps below to run a local dev server or serve using Docker.
+EcoTrace operates as a dynamic full-stack Node.js application to securely handle Google Gemini AI API requests and Website Carbon Header Audits. 
 
-### Running Locally (lite-server)
-1. Ensure [Node.js](https://nodejs.org/) is installed.
-2. Install the required development server:
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- A Google Gemini API Key (Optional, required for live AI chatbot features. Without it, the chatbot falls back to local rules).
+
+### Running Locally
+1. Clone the repository and navigate into the project folder.
+2. Install the required backend dependencies:
    ```bash
    npm install
    ```
-3. Boot the local server:
+3. (Optional) Create a `.env` file in the root directory and add your Gemini API Key:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+4. Boot the Express local server:
    ```bash
    npm run dev
    ```
-4. Access the web page at: `http://localhost:3000`
+5. Access the web application at: `http://localhost:3000`
 
 ### Running via Docker
-1. Build the Docker container:
+1. Build the Node.js Docker container:
    ```bash
    docker build -t ecotrace .
    ```
-2. Run the container:
+2. Run the container (pass your API key as an environment variable):
    ```bash
-   docker run -d -p 8080:80 ecotrace
+   docker run -d -p 3000:3000 -e GEMINI_API_KEY=your_gemini_api_key_here ecotrace
    ```
-3. Open `http://localhost:8080` in your web browser.
+3. Open `http://localhost:3000` in your web browser.
 
 ---
 

@@ -1,14 +1,20 @@
-# Use the lightweight Nginx image based on Alpine Linux
-FROM nginx:alpine
+# Use the lightweight Node.js Alpine image
+FROM node:18-alpine
 
-# Copy static website assets to Nginx default html directory
-COPY index.html /usr/share/nginx/html/
-COPY styles.css /usr/share/nginx/html/
-COPY app.js /usr/share/nginx/html/
-COPY assets/ /usr/share/nginx/html/assets/
+# Set working directory
+WORKDIR /app
 
-# Expose port 80 to access the site
-EXPOSE 80
+# Copy package config files
+COPY package*.json ./
 
-# Start Nginx in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Install production dependencies
+RUN npm install --production
+
+# Copy all application assets
+COPY . .
+
+# Expose backend port
+EXPOSE 3000
+
+# Start server
+CMD ["node", "server.js"]

@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboardUI();
     }
 
-    // --- WEBSITE CARBON CHECKER SIMULATION ---
+    // --- WEBSITE CARBON CHECKER LOGIC ---
     function runWebChecker() {
         const urlInput = document.getElementById('web-checker-url').value.trim();
         if (!urlInput) return;
@@ -654,44 +654,67 @@ document.addEventListener('DOMContentLoaded', () => {
         const hostingVal = document.getElementById('web-hosting-val');
         const gradeVal = document.getElementById('web-grade-val');
         const tipText = document.getElementById('web-checker-tip');
+        const checkerBtn = document.getElementById('web-checker-btn');
+
+        const originalBtnText = checkerBtn.textContent;
+        checkerBtn.textContent = 'Auditing...';
+        checkerBtn.disabled = true;
 
         resultsGrid.classList.add('hidden');
         tipText.classList.add('hidden');
 
-        // Simple hashing function to create interesting deterministic values for any URL
-        let hash = 0;
-        for (let i = 0; i < urlInput.length; i++) {
-            hash = urlInput.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        
-        // Generate simulated weight between 0.4 MB and 5.0 MB
-        const pageWeight = Math.abs((hash % 46) + 4) / 10; 
-        
-        // Carbon emitted per page load (0.05g to 1.10g)
-        const co2E = pageWeight * 0.18; 
-        
-        // Green Hosting status
-        const isGreen = Math.abs(hash % 2) === 0;
+        fetch('/api/check-website', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlInput })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            weightVal.textContent = data.weightMB.toFixed(2) + ' MB';
+            co2Val.textContent = data.co2Grams.toFixed(2) + ' g';
+            hostingVal.textContent = data.isGreen ? 'Clean Energy' : 'Fossil Grid';
+            hostingVal.style.color = data.isGreen ? 'var(--color-green)' : '#ef4444';
+            gradeVal.textContent = data.grade;
+            
+            if (data.isEstimated) {
+                tipText.innerHTML = `<strong>Note:</strong> ${data.note || 'Calculations estimated.'}<br>Web weights are measured by fetching page header content lengths. Optimized media and compressed assets keep weights low.`;
+            } else {
+                tipText.innerHTML = `This page transfers <strong>${data.weightMB} MB</strong> per load. Making assets smaller, compression, and clean hosting makes the web green!`;
+            }
 
-        // Grade calculation
-        let grade = 'A';
-        if (co2E > 0.8) grade = 'F';
-        else if (co2E > 0.5) grade = 'D';
-        else if (co2E > 0.3) grade = 'C';
-        else if (co2E > 0.15) grade = 'B';
-        else if (co2E < 0.08) grade = 'A+';
+            resultsGrid.classList.remove('hidden');
+            tipText.classList.remove('hidden');
+        })
+        .catch(err => {
+            console.error('Error auditing website:', err);
+            // Local fallback
+            let hash = 0;
+            for (let i = 0; i < urlInput.length; i++) {
+                hash = urlInput.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const pageWeight = Math.abs((hash % 46) + 4) / 10; 
+            const co2E = pageWeight * 0.18; 
+            const isGreen = Math.abs(hash % 2) === 0;
+            let grade = 'B';
+            if (co2E > 0.5) grade = 'D';
+            else if (co2E < 0.15) grade = 'A';
 
-        // Animate calculations
-        setTimeout(() => {
-            weightVal.textContent = pageWeight.toFixed(1) + ' MB';
+            weightVal.textContent = pageWeight.toFixed(1) + ' MB (Simulated)';
             co2Val.textContent = co2E.toFixed(2) + ' g';
             hostingVal.textContent = isGreen ? 'Clean Energy' : 'Fossil Grid';
             hostingVal.style.color = isGreen ? 'var(--color-green)' : '#ef4444';
             gradeVal.textContent = grade;
-            
+
             resultsGrid.classList.remove('hidden');
             tipText.classList.remove('hidden');
-        }, 400);
+        })
+        .finally(() => {
+            checkerBtn.textContent = originalBtnText;
+            checkerBtn.disabled = false;
+        });
     }
 
     // --- DASHBOARD UI UPDATING ---
@@ -1381,14 +1404,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = chatbotInputField.value.trim();
         if (!text) return;
 
-        appendChatMessage(text, 'user');
+        askEcoBot(text);
         chatbotInputField.value = '';
-
-        // Generate response
-        setTimeout(() => {
-            const reply = generateBotReply(text.toLowerCase());
-            appendChatMessage(reply, 'bot');
-        }, 600);
     });
 
     // Handle Prompt Chips click
@@ -1396,26 +1413,98 @@ document.addEventListener('DOMContentLoaded', () => {
         chip.addEventListener('click', () => {
             const action = chip.getAttribute('data-action');
             let userMsg = chip.textContent;
-            appendChatMessage(userMsg, 'user');
-
-            setTimeout(() => {
-                let reply = "";
-                if (action === 'analyze') {
-                    reply = generatePersonalizedAnalysis();
-                } else if (action === 'tips') {
-                    reply = generateCategoryTips();
-                } else if (action === 'explain') {
-                    reply = "Our calculations are based on standard greenhouse gas coefficients: gasoline cars emit roughly 180g CO₂ per km, standard grid electricity yields 350g CO₂ per kWh, and red-meat heavy diets produce about 3.2 tons CO₂ per year. Offset scores are generated by committing to and checking off green habits inside the **Action Plan** tab!";
-                }
-                appendChatMessage(reply, 'bot');
-            }, 500);
+            
+            if (action === 'explain') {
+                appendChatMessage(userMsg, 'user');
+                setTimeout(() => {
+                    const reply = "Our calculations are based on standard greenhouse gas coefficients: gasoline cars emit roughly 180g CO₂ per km, standard grid electricity yields 350g CO₂ per kWh, and red-meat heavy diets produce about 3.2 tons CO₂ per year. Offset scores are generated by committing to and checking off green habits inside the **Action Plan** tab!";
+                    appendChatMessage(reply, 'bot');
+                }, 400);
+            } else {
+                askEcoBot(userMsg);
+            }
         });
     });
 
-    function appendChatMessage(msg, sender) {
+    function askEcoBot(messageText) {
+        if (!messageText) return;
+
+        appendChatMessage(messageText, 'user');
+
+        // Create typing indicator bubble
+        const typingBubble = document.createElement('div');
+        typingBubble.className = 'chat-bubble bot loading';
+        typingBubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        chatbotMessagesContainer.appendChild(typingBubble);
+        scrollChatToBottom();
+
+        // Construct current stats payload
+        const results = calculateFootprint();
+        const commitmentsObj = state.commitments.map(id => {
+            const act = ACTIONS_DATABASE.find(a => a.id === id);
+            return {
+                title: act ? act.title : id,
+                impact: act ? act.impact : 0
+            };
+        });
+        const userStats = {
+            transport: results.transport,
+            energy: results.energy,
+            food: results.food,
+            waste: results.waste,
+            digital: results.digital,
+            total: results.total,
+            commitments: commitmentsObj
+        };
+
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: messageText, userStats: userStats })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            typingBubble.remove();
+            let formattedReply = formatMarkdown(data.reply);
+            appendChatMessage(formattedReply, 'bot', true);
+        })
+        .catch(error => {
+            console.error('Error fetching chat response:', error);
+            typingBubble.remove();
+            const fallbackReply = generateBotReply(messageText.toLowerCase());
+            appendChatMessage(fallbackReply + "\n\n*(Note: Running in offline fallback mode)*", 'bot');
+        });
+    }
+
+    function formatMarkdown(text) {
+        if (!text) return "";
+        let html = text;
+        // Escape HTML tags to prevent XSS
+        html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        // Convert **bold** to <strong>bold</strong>
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Convert *italic* or _italic_ to <em>italic</em>
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Convert `code` to <code>code</code>
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+        // Replace newlines with <br>
+        html = html.replace(/\n/g, '<br>');
+        return html;
+    }
+
+    function appendChatMessage(msg, sender, isHTML = false) {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${sender}`;
-        bubble.innerHTML = msg.replace(/\n/g, '<br>');
+        if (isHTML) {
+            bubble.innerHTML = msg;
+        } else {
+            const temp = document.createElement('div');
+            temp.textContent = msg;
+            bubble.innerHTML = temp.innerHTML.replace(/\n/g, '<br>');
+        }
         chatbotMessagesContainer.appendChild(bubble);
         scrollChatToBottom();
     }
