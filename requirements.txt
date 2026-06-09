@@ -10,7 +10,7 @@
 # - jsonwebtoken: ^9.0.3 (User sessions)
 # - express-rate-limit: ^8.5.2 (Abuse protection)
 # - helmet: ^8.2.0 (Security headers)
-# - @google/generative-ai: ^0.11.0 (Generative AI integration)
+# - @google/generative-ai: ^0.21.0 (Generative AI integration)
 
 # Development & Testing Dependencies:
 # - jest: ^30.4.2 (Test runner)
