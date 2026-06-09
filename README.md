@@ -32,13 +32,26 @@ EcoBot parses the user's active calculator emissions to offer targeted tips:
 
 ## ⚡ Key Features
 
+## ⚡ Key Features
+
 1. **Step-by-Step Carbon Calculator Wizard**: Detailed inputs across 5 categories: Transportation, Home Energy, Food & Diet, Lifestyle & Waste, and Digital Carbon.
-2. **Interactive Visual Dashboard**: Instant feedback using Chart.js doughnut and horizontal comparison bars.
-3. **Achievements & Badges**: 7 unlockable badges (e.g., *Green Citizen*, *Eco Warrior*, *Solar Saver*, *Trivia Scholar*) that dynamically highlight on completion.
-4. **Action Planner & Weekly Habits**: Committable reduction habits linked to a progress bar checklist to measure annual CO₂ offset.
-5. **What-If Sandbox Simulator**: Toggles for systemic adjustments (solar panels, EV, plant-based diet) that render visual tree growth plots (1 tree absorbs 22 kg CO₂/yr).
-6. **Website Carbon Checker**: Simulates auditing web page URL resource payloads and yields an Eco Grade (A+ to F).
-7. **EcoBot Climate Chatbot**: A floating assistant that inspects your actual statistics to suggest context-rich tips and answers general environmental questions.
+
+2. **Interactive Visual Dashboard**: Instant carbon breakdown feedback using Chart.js doughnut and horizontal comparison bars.
+
+3. **Secure User Authentication & Session Persistence**: A fully functional onboarding system backed by a local **SQLite Database** (`database.sqlite`). Users can register an account, log in securely via bcrypt/JWT encryption, and persistently save their footprint tracking progress to the server.
+
+4. **Premium Feature Gating**: Advanced utilities like the **EcoBot AI Chatbot** and **Website Carbon Analyzer** are securely locked behind a sleek glassmorphism overlay, prompting users to authenticate before gaining premium access.
+
+5. **Generative EcoBot Climate Chatbot**: Powered by the `gemini-1.5-flash` model via the `@google/generative-ai` SDK. The backend securely injects the user's real-time calculator statistics into the prompt context window to provide personalized, hyper-targeted reduction strategies.
+
+6. **Live Website Carbon Analyzer**: Captures HEAD header payload weights through a native backend `fetch` mechanism, determining exact CO₂ generation metrics per visit based on a realistic 0.18g/MB coefficient.
+
+7. **Interactive "What-If" Sandbox Simulator**: Allows users to toggle macro-sustainability shifts (e.g., switching to an EV or a vegan diet) to visualize their potential carbon reductions before committing.
+
+8. **Gamified Badge & Checklist System**: Encourages green habits through unlockable profile badges and a weekly commitment habit tracker.
+
+9. **Action Planner & Weekly Habits**: Committable reduction habits linked to a progress bar checklist to measure annual CO₂ offset.
+
 
 ---
 
