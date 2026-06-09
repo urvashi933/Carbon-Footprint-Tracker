@@ -26,9 +26,9 @@ Additionally, the **AI Chatbot** and **Website Carbon Analyzer** are now "Premiu
 ![Locked Chatbot UI](assets/locked_chatbot_ui.png)
 ![Locked Website Analyzer UI](assets/locked_website_analyzer_ui.png)
 
-Here is the automated interaction recording of the login modal successfully unlocking these features upon a fresh SQLite database registration:
+Here is the automated interaction recording of the full User Login and Authentication workflow:
 
-![Premium Features Lock & SQLite Flow](assets/premium_feature_locks_demo.webp)
+![EcoTrace Authentication Flow](assets/auth_flow_demo.webp)
 
 ---
 
