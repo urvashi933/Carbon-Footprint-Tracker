@@ -1,5 +1,5 @@
 # Language: JavaScript (Node.js / ECMAScript 2021)
-# Runtime Engine: Node.js >= v18.0.0 (Recommended >= v22.0.0)
+# Runtime Engine: Node.js >= v18.0.0 (Recommended >= v20.x.0)
 # Package Manager: npm >= v9.0.0
 
 # Core Dependencies & Versions:
