@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
             recyclePaper: true,
             recyclePlastic: true,
             recycleGlass: false,
-            recycleMetal: false
+            recycleMetal: false,
+            digitalStreaming: 10,  // weekly hours
+            digitalMeeting: 5,     // weekly hours
+            digitalScrolling: 2    // daily hours
         },
         commitments: [], // array of action IDs (e.g. ['led-bulbs'])
         checkedHabits: [], // array of checked commitment IDs for the week
@@ -204,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'plant-powered',
             title: 'Plant Powered',
             desc: 'Selected Vegetarian or Vegan diet.',
-            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" style="display:none;"/><path d="M2 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" style="display:none;"/><path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1-20 0c0-5.523 4.477-10 10-10zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z" style="display:none;"/><path d="M12 3a9 9 0 0 0-9 9c0 4.5 4.5 9 9 9s9-4.5 9-9-4.5-9-9-9zm0 3c3 0 5 2.5 5 5s-2.5 5-5 5-5-2.5-5-5 2.5-5 5-5z"/></svg>`
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 0 0-9 9c0 4.5 4.5 9 9 9s9-4.5 9-9-4.5-9-9-9zm0 3c3 0 5 2.5 5 5s-2.5 5-5 5-5-2.5-5-5 2.5-5 5-5z"/></svg>`
         },
         {
             id: 'solar-saver',
@@ -301,12 +304,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const wasteTotal = shoppingBase + Math.max(0.1, wasteBase - recyclingDiscount);
 
+        // 5. DIGITAL CARBON FOOTPRINT (NEW FEATURE)
+        // Streaming: 180g (0.00018 Tons) per hour
+        // Calls: 120g (0.00012 Tons) per hour
+        // Scrolling: 50g (0.00005 Tons) per hour
+        const streamingEmissions = (inputs.digitalStreaming * 52 * 0.00018);
+        const callsEmissions = (inputs.digitalMeeting * 52 * 0.00012);
+        const scrollingEmissions = (inputs.digitalScrolling * 365 * 0.00005);
+        const digitalTotal = streamingEmissions + callsEmissions + scrollingEmissions;
+
         return {
-            transport: parseFloat(transportTotal.toFixed(2)),
-            energy: parseFloat(energyTotal.toFixed(2)),
-            food: parseFloat(foodTotal.toFixed(2)),
-            waste: parseFloat(wasteTotal.toFixed(2)),
-            total: parseFloat((transportTotal + energyTotal + foodTotal + wasteTotal).toFixed(2))
+            transport: parseFloat(carEmissions + transitEmissions + flightsEmissions),
+            energy: parseFloat(energyTotal),
+            food: parseFloat(foodTotal),
+            waste: parseFloat(wasteTotal),
+            digital: parseFloat(digitalTotal),
+            total: parseFloat((transportTotal + energyTotal + foodTotal + wasteTotal + digitalTotal).toFixed(2))
         };
     }
 
@@ -587,12 +600,98 @@ document.addEventListener('DOMContentLoaded', () => {
             state.calculatorInputs.recycleMetal = e.target.checked;
             onInputsChange();
         });
+
+        // NEW: Digital Carbon Sliders Binding
+        const streamingInput = document.getElementById('digital-streaming');
+        const streamingVal = document.getElementById('digital-streaming-val');
+        streamingInput.value = state.calculatorInputs.digitalStreaming;
+        streamingVal.textContent = state.calculatorInputs.digitalStreaming + ' hours/week';
+        streamingInput.addEventListener('input', (e) => {
+            state.calculatorInputs.digitalStreaming = parseInt(e.target.value);
+            streamingVal.textContent = state.calculatorInputs.digitalStreaming + ' hours/week';
+            onInputsChange();
+        });
+
+        const meetingInput = document.getElementById('digital-meeting');
+        const meetingVal = document.getElementById('digital-meeting-val');
+        meetingInput.value = state.calculatorInputs.digitalMeeting;
+        meetingVal.textContent = state.calculatorInputs.digitalMeeting + ' hours/week';
+        meetingInput.addEventListener('input', (e) => {
+            state.calculatorInputs.digitalMeeting = parseInt(e.target.value);
+            meetingVal.textContent = state.calculatorInputs.digitalMeeting + ' hours/week';
+            onInputsChange();
+        });
+
+        const scrollingInput = document.getElementById('digital-scrolling');
+        const scrollingVal = document.getElementById('digital-scrolling-val');
+        scrollingInput.value = state.calculatorInputs.digitalScrolling;
+        scrollingVal.textContent = state.calculatorInputs.digitalScrolling + ' hours/day';
+        scrollingInput.addEventListener('input', (e) => {
+            state.calculatorInputs.digitalScrolling = parseFloat(e.target.value);
+            scrollingVal.textContent = state.calculatorInputs.digitalScrolling + ' hours/day';
+            onInputsChange();
+        });
+
+        // NEW: Website Carbon Analyzer Button
+        const checkerBtn = document.getElementById('web-checker-btn');
+        checkerBtn.addEventListener('click', runWebChecker);
     }
 
     function onInputsChange() {
         saveState();
         checkUnlockedBadges();
         updateDashboardUI();
+    }
+
+    // --- WEBSITE CARBON CHECKER SIMULATION ---
+    function runWebChecker() {
+        const urlInput = document.getElementById('web-checker-url').value.trim();
+        if (!urlInput) return;
+
+        const resultsGrid = document.getElementById('web-checker-results');
+        const weightVal = document.getElementById('web-weight-val');
+        const co2Val = document.getElementById('web-co2-val');
+        const hostingVal = document.getElementById('web-hosting-val');
+        const gradeVal = document.getElementById('web-grade-val');
+        const tipText = document.getElementById('web-checker-tip');
+
+        resultsGrid.classList.add('hidden');
+        tipText.classList.add('hidden');
+
+        // Simple hashing function to create interesting deterministic values for any URL
+        let hash = 0;
+        for (let i = 0; i < urlInput.length; i++) {
+            hash = urlInput.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        
+        // Generate simulated weight between 0.4 MB and 5.0 MB
+        const pageWeight = Math.abs((hash % 46) + 4) / 10; 
+        
+        // Carbon emitted per page load (0.05g to 1.10g)
+        const co2E = pageWeight * 0.18; 
+        
+        // Green Hosting status
+        const isGreen = Math.abs(hash % 2) === 0;
+
+        // Grade calculation
+        let grade = 'A';
+        if (co2E > 0.8) grade = 'F';
+        else if (co2E > 0.5) grade = 'D';
+        else if (co2E > 0.3) grade = 'C';
+        else if (co2E > 0.15) grade = 'B';
+        else if (co2E < 0.08) grade = 'A+';
+
+        // Animate calculations
+        setTimeout(() => {
+            weightVal.textContent = pageWeight.toFixed(1) + ' MB';
+            co2Val.textContent = co2E.toFixed(2) + ' g';
+            hostingVal.textContent = isGreen ? 'Clean Energy' : 'Fossil Grid';
+            hostingVal.style.color = isGreen ? 'var(--color-green)' : '#ef4444';
+            gradeVal.textContent = grade;
+            
+            resultsGrid.classList.remove('hidden');
+            tipText.classList.remove('hidden');
+        }, 400);
     }
 
     // --- DASHBOARD UI UPDATING ---
@@ -653,14 +752,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const fontColor = state.theme === 'dark' ? '#92aba0' : '#53645b';
         const gridColor = state.theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
         
-        // 1. DOUGHNUT CHART
-        const categoryData = [results.transport, results.energy, results.food, results.waste];
-        const categoryLabels = ['Transport', 'Energy', 'Food', 'Waste'];
+        // 1. DOUGHNUT CHART (Updated for 5 slices)
+        const categoryData = [results.transport, results.energy, results.food, results.waste, results.digital];
+        const categoryLabels = ['Transport', 'Energy', 'Food', 'Waste', 'Digital'];
         const categoryColors = [
             getComputedStyle(document.documentElement).getPropertyValue('--transport-color').trim(),
             getComputedStyle(document.documentElement).getPropertyValue('--energy-color').trim(),
             getComputedStyle(document.documentElement).getPropertyValue('--food-color').trim(),
-            getComputedStyle(document.documentElement).getPropertyValue('--waste-color').trim()
+            getComputedStyle(document.documentElement).getPropertyValue('--waste-color').trim(),
+            '#06b6d4' // cyan for digital
         ];
 
         if (categoryChart) {
@@ -689,9 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             position: 'bottom',
                             labels: {
                                 boxWidth: 12,
-                                padding: 15,
+                                padding: 10,
                                 color: fontColor,
-                                font: { family: 'Inter', size: 11, weight: '500' }
+                                font: { family: 'Inter', size: 10, weight: '500' }
                             }
                         },
                         tooltip: {
@@ -1023,16 +1123,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Sandbox Overrides
         if (state.sandboxSwitches.solar) {
             sandboxInputs.cleanMix = 100;
-            if (sandboxInputs.heatFuel === 'electric') {
-                // electric heat becomes powered by 100% solar
-            }
         }
         if (state.sandboxSwitches.vegan) {
             sandboxInputs.diet = 'vegan';
         }
         if (state.sandboxSwitches.ev) {
             sandboxInputs.carFuel = 'electric';
-            // Assume electric car drives with cleanMix utility mix if solar is active
             if (state.sandboxSwitches.solar) {
                 sandboxInputs.cleanMix = 100;
             }
@@ -1076,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tonsAvoided = Math.max(0, baseline.total - simulated.total);
         const percentReduced = baseline.total > 0 ? Math.round((tonsAvoided / baseline.total) * 100) : 0;
         
-        avoidedValEl.textContent = tonsAvoided.toFixed(2);
+        avoidedValEl.textContent = avoidedFactorPrint(tonsAvoided);
         avoidedPctEl.textContent = `${percentReduced}% Reduction`;
 
         // 1 Tree absorbs roughly 22kg CO2 per year
@@ -1087,11 +1183,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSandboxForest(treesEquivalent);
     }
 
+    function avoidedFactorPrint(val) {
+        return val.toFixed(2);
+    }
+
     function renderSandboxForest(numTrees) {
         const plot = document.getElementById('tree-plot-area');
         plot.innerHTML = '';
 
-        // Draw 1 tree icon for every 20 trees equivalent (up to 40 icons max to avoid performance lag)
         const iconsToDraw = Math.min(40, Math.floor(numTrees / 12));
         
         if (iconsToDraw === 0) {
@@ -1237,7 +1336,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsTitle.textContent = "Climate Scholar! Perfect Score 🌟";
             resultsSvg.style.color = "var(--color-green)";
             
-            // Unlock badge
             if (!state.unlockedBadges.includes('trivia-scholar')) {
                 state.unlockedBadges.push('trivia-scholar');
                 saveState();
@@ -1256,6 +1354,153 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- FLOATING AI ASSISTANT CHATBOT LOGIC ---
+    const chatbotToggleBtn = document.getElementById('chatbot-toggle-btn');
+    const chatbotBox = document.getElementById('chatbot-box');
+    const chatbotCloseBtn = document.getElementById('chatbot-close-btn');
+    const chatbotMessagesContainer = document.getElementById('chatbot-messages-container');
+    const chatbotInputForm = document.getElementById('chatbot-input-form');
+    const chatbotInputField = document.getElementById('chatbot-input-field');
+    const chatbotQuickChips = document.querySelectorAll('.prompt-chip');
+    const chatbotPing = chatbotToggleBtn.querySelector('.chatbot-ping');
+
+    // Toggle chatbot panel
+    chatbotToggleBtn.addEventListener('click', () => {
+        chatbotBox.classList.toggle('hidden');
+        if (chatbotPing) chatbotPing.style.display = 'none'; // hide ping notification once opened
+        scrollChatToBottom();
+    });
+
+    chatbotCloseBtn.addEventListener('click', () => {
+        chatbotBox.classList.add('hidden');
+    });
+
+    // Handle Form Message send
+    chatbotInputForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = chatbotInputField.value.trim();
+        if (!text) return;
+
+        appendChatMessage(text, 'user');
+        chatbotInputField.value = '';
+
+        // Generate response
+        setTimeout(() => {
+            const reply = generateBotReply(text.toLowerCase());
+            appendChatMessage(reply, 'bot');
+        }, 600);
+    });
+
+    // Handle Prompt Chips click
+    chatbotQuickChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const action = chip.getAttribute('data-action');
+            let userMsg = chip.textContent;
+            appendChatMessage(userMsg, 'user');
+
+            setTimeout(() => {
+                let reply = "";
+                if (action === 'analyze') {
+                    reply = generatePersonalizedAnalysis();
+                } else if (action === 'tips') {
+                    reply = generateCategoryTips();
+                } else if (action === 'explain') {
+                    reply = "Our calculations are based on standard greenhouse gas coefficients: gasoline cars emit roughly 180g CO₂ per km, standard grid electricity yields 350g CO₂ per kWh, and red-meat heavy diets produce about 3.2 tons CO₂ per year. Offset scores are generated by committing to and checking off green habits inside the **Action Plan** tab!";
+                }
+                appendChatMessage(reply, 'bot');
+            }, 500);
+        });
+    });
+
+    function appendChatMessage(msg, sender) {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${sender}`;
+        bubble.innerHTML = msg.replace(/\n/g, '<br>');
+        chatbotMessagesContainer.appendChild(bubble);
+        scrollChatToBottom();
+    }
+
+    function scrollChatToBottom() {
+        chatbotMessagesContainer.scrollTop = chatbotMessagesContainer.scrollHeight;
+    }
+
+    function generateBotReply(text) {
+        if (text.includes('hi') || text.includes('hello') || text.includes('hey')) {
+            return "Hello! I am EcoBot. How can I help you today? You can ask me to **analyze** your carbon footprint, suggest **tips**, or ask general environmental questions!";
+        }
+        if (text.includes('analyze') || text.includes('stat') || text.includes('score') || text.includes('my footprint')) {
+            return generatePersonalizedAnalysis();
+        }
+        if (text.includes('tip') || text.includes('reduce') || text.includes('help') || text.includes('cut')) {
+            return generateCategoryTips();
+        }
+        if (text.includes('solar') || text.includes('energy') || text.includes('electricity')) {
+            return "Home energy is a massive source of personal emissions! Consider setting your renewable electricity percentage slider higher, installing LED bulbs, washing laundry in cold water, or switching to an electric heat pump.";
+        }
+        if (text.includes('meat') || text.includes('food') || text.includes('vegan') || text.includes('diet')) {
+            return "Transitioning to a plant-based diet is one of the most effective personal climate actions. Beef has 10x the carbon footprint of chicken and 60x that of vegetables. Try starting with 'Meatless Mondays' in the Action Plan tab!";
+        }
+        if (text.includes('car') || text.includes('driving') || text.includes('flight') || text.includes('fly')) {
+            return "Transportation emits high amounts of CO₂. Driving less, carpooling, choosing public transit, and reducing flights (especially long-haul flights) make a major difference. If you drive, switching to an electric vehicle reduces fuel emissions by about 75%!";
+        }
+        if (text.includes('compost') || text.includes('recycle') || text.includes('plastic') || text.includes('waste')) {
+            return "Landfills produce methane, a greenhouse gas 28x more potent than CO₂. Composting organic waste and recycling paper, glass, plastic, and metal helps mitigate landfill loads. Minimizing shopping and avoiding fast fashion also cuts manufacturing emissions.";
+        }
+
+        return "I'm not sure I understand that completely. Try clicking one of my quick-action buttons below or ask me about **energy**, **transport**, **food**, or **waste**!";
+    }
+
+    function generatePersonalizedAnalysis() {
+        const results = calculateFootprint();
+        
+        // Find highest emissions category
+        let categories = [
+            { name: 'Transport', value: results.transport },
+            { name: 'Energy', value: results.energy },
+            { name: 'Food', value: results.food },
+            { name: 'Waste', value: results.waste },
+            { name: 'Digital Carbon', value: results.digital }
+        ];
+        
+        categories.sort((a, b) => b.value - a.value);
+        const highest = categories[0];
+
+        return `Based on your inputs, your estimated carbon footprint is **${results.total.toFixed(2)} Tons CO₂e/year**.\n\nYour highest emission category is **${highest.name}** at **${highest.value.toFixed(2)} Tons**, followed by **${categories[1].name}** at **${categories[1].value.toFixed(2)} Tons**.\n\nYou currently have committed to **${state.commitments.length}** habit actions, saving an estimated **${state.commitments.reduce((acc, id) => acc + (ACTIONS_DATABASE.find(a => a.id === id)?.impact || 0), 0)} kg CO₂/year**. Keep it up!`;
+    }
+
+    function generateCategoryTips() {
+        const results = calculateFootprint();
+        
+        // Find highest emissions category
+        let categories = [
+            { name: 'transport', value: results.transport },
+            { name: 'energy', value: results.energy },
+            { name: 'food', value: results.food },
+            { name: 'waste', value: results.waste },
+            { name: 'digital', value: results.digital }
+        ];
+        categories.sort((a, b) => b.value - a.value);
+        const highestCat = categories[0].name;
+
+        if (highestCat === 'transport') {
+            return "Since **Transport** is your largest emissions source, try these high-impact changes:\n1. Commit to **Cycle/Walk Short Trips** in your Action Plan to save up to 450 kg CO₂/yr.\n2. Carpool with colleagues (saves 350 kg/yr).\n3. Try to combine multiple flights or choose train routes when traveling locally.";
+        }
+        if (highestCat === 'energy') {
+            return "Since **Energy** is your largest source, try these utility fixes:\n1. Switch to **LED Bulbs** (saves 150 kg/yr).\n2. Lower your winter heating by just 2°C (saves 220 kg/yr).\n3. Purchase clean community solar energy or install solar panels.";
+        }
+        if (highestCat === 'food') {
+            return "Since **Food & Diet** emissions are high, try starting here:\n1. Try **Meatless Mondays** in your checklist (saves 160 kg/yr).\n2. Reduce food waste (saves up to 400 kg/yr by composting leftovers and planning meals).\n3. Source seasonal ingredients locally to cut transport packaging emissions.";
+        }
+        if (highestCat === 'waste') {
+            return "Since **Lifestyle Waste** is your biggest source:\n1. Switch to **Zero Single-Use Plastics** (saves 110 kg/yr).\n2. Separate cardboards, plastics, glass, and metals to optimize recycling offsets.\n3. Practice minimalist purchasing, choosing durable second-hand alternatives over fast fashion.";
+        }
+        if (highestCat === 'digital') {
+            return "Since **Digital Carbon** is your largest source:\n1. Try reducing passive video streaming or lower the resolution to 720p.\n2. Turn off video feeds in large virtual call meetings if not needed.\n3. Take a digital break to decrease daily screen time scrolling.";
+        }
+
+        return "Try selecting active commitments in your **Action Plan** tab. Every commitment helps offset your footprint!";
+    }
+
     // --- APPLICATION STARTUP ---
     loadState();
     bindInputs();
@@ -1266,4 +1511,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initSandboxState();
     updateSandboxSimulation();
     showWizardPanel(0);
+
+    // Initial bot notification bubble check after 4 seconds
+    setTimeout(() => {
+        if (chatbotPing && chatbotBox.classList.contains('hidden')) {
+            chatbotPing.style.display = 'block';
+        }
+    }, 4000);
 });

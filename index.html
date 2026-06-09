@@ -220,6 +220,10 @@
                             <span class="wizard-number">4</span>
                             <span class="wizard-title">Lifestyle & Waste</span>
                         </button>
+                        <button class="wizard-tab-btn" data-wizard="digital">
+                            <span class="wizard-number">5</span>
+                            <span class="wizard-title">Digital Carbon</span>
+                        </button>
                     </div>
 
                     <!-- Wizard Form Container -->
@@ -548,11 +552,74 @@
                             </div>
                         </div>
 
+                        <!-- Digital Carbon Panel -->
+                        <div class="wizard-panel" id="wizard-digital">
+                            <h2><span class="category-dot transport-accent-bg"></span>Digital Carbon & Website Checker</h2>
+                            <p class="panel-desc">Streaming, browsing, and video calls run on massive data centers. Estimate your digital footprints and analyze website carbon weight.</p>
+                            
+                            <div class="two-column-sliders">
+                                <div class="form-group">
+                                    <div class="slider-header">
+                                        <label for="digital-streaming" class="input-label">Weekly Video Streaming (Netflix/YouTube)</label>
+                                        <span class="slider-value" id="digital-streaming-val">10 hours</span>
+                                    </div>
+                                    <input type="range" id="digital-streaming" class="range-slider" min="0" max="60" step="1" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <div class="slider-header">
+                                        <label for="digital-meeting" class="input-label">Weekly Video Calls (Zoom/Meet)</label>
+                                        <span class="slider-value" id="digital-meeting-val">5 hours</span>
+                                    </div>
+                                    <input type="range" id="digital-meeting" class="range-slider" min="0" max="45" step="1" value="5">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="slider-header">
+                                    <label for="digital-scrolling" class="input-label">Daily Social Media Scrolling & Gaming</label>
+                                    <span class="slider-value" id="digital-scrolling-val">2 hours</span>
+                                </div>
+                                <input type="range" id="digital-scrolling" class="range-slider" min="0" max="12" step="0.5" value="2">
+                            </div>
+
+                            <!-- Website Carbon Checker -->
+                            <div class="web-checker-box">
+                                <h3>Website Carbon Analyzer</h3>
+                                <p class="panel-desc">Enter any website URL to calculate its simulated size and carbon emissions per visit.</p>
+                                <div class="checker-input-group">
+                                    <input type="url" id="web-checker-url" class="range-slider-text-style" placeholder="https://example.com" value="https://google.com">
+                                    <button id="web-checker-btn" class="primary-btn">Analyze URL</button>
+                                </div>
+                                <div id="web-checker-results" class="checker-results-grid hidden">
+                                    <div class="checker-res-card">
+                                        <span class="card-lbl">Page Weight</span>
+                                        <strong id="web-weight-val">0.0 MB</strong>
+                                    </div>
+                                    <div class="checker-res-card">
+                                        <span class="card-lbl">CO₂ / Visit</span>
+                                        <strong id="web-co2-val">0.00 g</strong>
+                                    </div>
+                                    <div class="checker-res-card">
+                                        <span class="card-lbl">Hosting Status</span>
+                                        <strong id="web-hosting-val">Clean Energy</strong>
+                                    </div>
+                                    <div class="checker-res-card">
+                                        <span class="card-lbl">Eco Grade</span>
+                                        <strong id="web-grade-val">A</strong>
+                                    </div>
+                                </div>
+                                <div id="web-checker-tip" class="checker-tip-text hidden">
+                                    <strong>Optimization Tip:</strong> Minimize Javascript bundles and compress assets to reduce carbon transfer loads.
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Wizard Footer Actions -->
                         <div class="wizard-footer">
                             <button id="prev-wizard-btn" class="secondary-btn" disabled>Back</button>
                             <div class="wizard-progress-dots">
                                 <span class="dot active"></span>
+                                <span class="dot"></span>
                                 <span class="dot"></span>
                                 <span class="dot"></span>
                                 <span class="dot"></span>
@@ -829,6 +896,46 @@
         <footer class="app-footer-bar">
             <p>Made with 💚 for Google Hack2Skill Challenge 3. Powered by EcoTrace.</p>
         </footer>
+    </div>
+
+    <!-- Floating AI Assistant Chatbot UI -->
+    <div class="chatbot-wrapper">
+        <button id="chatbot-toggle-btn" class="chatbot-toggle" aria-label="Open AI Assistant Chatbot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chatbot-icon-svg">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="chatbot-ping"></span>
+        </button>
+
+        <div id="chatbot-box" class="chatbot-card glass-panel hidden">
+            <div class="chatbot-header-bar">
+                <div class="bot-profile">
+                    <div class="bot-avatar">🌱</div>
+                    <div class="bot-name-info">
+                        <h4>EcoBot</h4>
+                        <span>Climate AI Assistant</span>
+                    </div>
+                </div>
+                <button id="chatbot-close-btn" class="close-chat" aria-label="Close Chatbot">&times;</button>
+            </div>
+            
+            <div class="chatbot-messages-area" id="chatbot-messages-container">
+                <div class="chat-bubble bot">
+                    Hello! I'm EcoBot, your climate companion. I can analyze your carbon emissions, suggest high-impact habits, or answer environmental questions!
+                </div>
+            </div>
+
+            <div class="chatbot-quick-prompts">
+                <button class="prompt-chip" data-action="analyze">📊 Analyze Stats</button>
+                <button class="prompt-chip" data-action="tips">💡 Quick Tips</button>
+                <button class="prompt-chip" data-action="explain">❓ How to offset?</button>
+            </div>
+
+            <form id="chatbot-input-form" class="chatbot-form-area">
+                <input type="text" id="chatbot-input-field" placeholder="Ask EcoBot anything..." required autocomplete="off">
+                <button type="submit" class="primary-btn chat-send-btn">Send</button>
+            </form>
+        </div>
     </div>
 
     <!-- Core App JS -->
