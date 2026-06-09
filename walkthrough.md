@@ -61,4 +61,4 @@ Our automated browser subagent ran a complete application audit. It successfully
 
 Observe the full interactive verification recording below:
 
-![Browser verification recording](C:/Users/Lenovo/.gemini/antigravity-ide/brain/1204480d-94be-472c-9441-970f08b754e7/browser_verification_1781007118207.webp)
+![Browser verification recording](C:/Users/Lenovo/.gemini/antigravity-ide/brain/1204480d-94be-472c-9441-970f08b754e7/e2e_verification_1781008451748.webp)
