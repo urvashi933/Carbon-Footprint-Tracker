@@ -107,6 +107,18 @@ EcoTrace operates as a dynamic full-stack Node.js application to securely handle
 
 ---
 
+## 🔮 Future Scope
+
+As EcoTrace scales, several exciting features are planned for future releases to enhance personal carbon tracking and community engagement:
+
+1. **User Authentication & Cloud Sync**: Allow users to create accounts to securely save their footprint history, badge progress, and committed habits across multiple devices over time.
+2. **Global Leaderboards & Social Challenges**: Introduce competitive community elements where users can join sustainability challenges, form teams with friends, and view global leaderboards.
+3. **IoT Integration (Smart Home/EV)**: Connect directly with smart home energy monitors (e.g., Google Nest) and EV telemetry APIs to pull live, automated electricity usage and driving statistics rather than relying on manual input.
+4. **Carbon Offset Marketplace**: Provide direct, vetted links to certified carbon offset programs (reforestation, clean energy initiatives) where users can seamlessly purchase credits to directly neutralize their remaining footprint.
+5. **Multi-Language & Regional Localization**: Expand the Gemini AI chatbot and UI to support multiple languages alongside region-specific grid carbon conversion coefficients for pinpoint global accuracy.
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
