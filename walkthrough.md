@@ -21,9 +21,14 @@ The browser automation captured the expanded calculator tabs, chatbot panel, and
 ### 3. SQLite Database & Premium Feature Gating
 EcoTrace now features a secure, fully functional User Authentication system backed by a robust, local **SQLite Database** (`database.sqlite`)! Users can create an account, log in securely using bcrypt/JWT, and save their calculator footprint progress to the server. 
 
-Additionally, the **AI Chatbot** and **Website Carbon Analyzer** are now "Premium" features—they are grayed out with a lock overlay and strictly require the user to sign up before use. Here is the automated interaction recording of the login modal successfully unlocking these features upon a fresh SQLite database registration:
+Additionally, the **AI Chatbot** and **Website Carbon Analyzer** are now "Premium" features—they are grayed out with a glassmorphism lock overlay and strictly require the user to sign up before use. 
 
-![Premium Features Lock & SQLite Flow](assets/premium_locks_sqlite_test.webp)
+![Locked Chatbot UI](assets/locked_chatbot_ui.png)
+![Locked Website Analyzer UI](assets/locked_website_analyzer_ui.png)
+
+Here is the automated interaction recording of the login modal successfully unlocking these features upon a fresh SQLite database registration:
+
+![Premium Features Lock & SQLite Flow](assets/premium_feature_locks_demo.webp)
 
 ---
 
