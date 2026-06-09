@@ -13,6 +13,17 @@ const jwt = require('jsonwebtoken');
 // Load environment variables
 dotenv.config();
 
+// === TEMPORARY DIAGNOSTIC LOG ===
+console.log("=== GEMINI KEY DIAGNOSTIC ===");
+if (!process.env.GEMINI_API_KEY) {
+    console.log("RESULT: GEMINI_API_KEY is completely UNDEFINED or blank.");
+} else {
+    console.log("RESULT: Key found successfully!");
+    console.log("Length of key:", process.env.GEMINI_API_KEY.length);
+    console.log("Key starts with:", process.env.GEMINI_API_KEY.substring(0, 6));
+}
+console.log("=============================");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
