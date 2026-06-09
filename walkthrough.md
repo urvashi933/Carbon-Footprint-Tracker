@@ -18,6 +18,11 @@ The browser automation captured the expanded calculator tabs, chatbot panel, and
 
 ![EcoTrace Chatbot & Website Checker Demo Video](assets/dynamic_backend_verification.webp)
 
+### 3. User Authentication & Cloud Save Flow
+EcoTrace now features a secure, fully functional User Authentication system! Users can create an account, log in, and save their calculator footprint progress to the server. Here is the automated interaction recording of the login and save flow in action:
+
+![EcoTrace Authentication and Cloud Save Demo](assets/auth_flow_test.webp)
+
 ---
 
 ## Expanded Dynamic Architecture
