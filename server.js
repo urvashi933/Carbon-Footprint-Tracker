@@ -40,7 +40,8 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Start Server
 let server;
-if (process.env.NODE_ENV !== 'test') {
+// Vercel handles starting the server internally. Calling app.listen() binds the port and can crash the serverless function.
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
     server = app.listen(PORT, () => {
         console.log(`Server listening at http://localhost:${PORT}`);
     });

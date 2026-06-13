@@ -11,9 +11,10 @@ let db;
  */
 async function initDB() {
     console.log("Initializing database service...");
+    const dbPath = process.env.VERCEL ? '/tmp/database.sqlite' : path.join(__dirname, '..', 'database.sqlite');
     db = await open({
-        // Point to the root directory where the DB resides
-        filename: path.join(__dirname, '..', 'database.sqlite'),
+        // Point to a writable directory on Vercel (/tmp) or the root directory locally
+        filename: dbPath,
         driver: sqlite3.Database
     });
     
