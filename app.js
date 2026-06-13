@@ -1698,11 +1698,10 @@ document.addEventListener('DOMContentLoaded', () => {
             chatbotPing.style.display = 'block';
         }
     }, 4000);
-});
 
-// ==========================================
-// AUTHENTICATION & CLOUD SAVE MODULE
-// ==========================================
+    // ==========================================
+    // AUTHENTICATION & CLOUD SAVE MODULE
+    // ==========================================
 const authModalBtn = document.getElementById('auth-modal-btn');
 const authModal = document.getElementById('auth-modal');
 const closeAuthModal = document.getElementById('close-auth-modal');
@@ -1982,4 +1981,6 @@ function applyProgressToUI(progress) {
 }
 
 // Call on startup
-initAuth();
+    initAuth();
+
+});

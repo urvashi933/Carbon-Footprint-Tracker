@@ -5,7 +5,8 @@ process.env.JWT_SECRET = 'test_secret_key_12345';
 const request = require('supertest');
 const fs = require('fs');
 const path = require('path');
-const { app, initDB, getDB } = require('../server');
+const app = require('../server');
+const { initDB, closeDB } = require('../services/db.service');
 
 // Clear Gemini API key after server.js loads (and runs dotenv.config()) to force local mock fallback responses during testing
 delete process.env.GEMINI_API_KEY;
@@ -18,10 +19,7 @@ describe('EcoTrace Backend API Integration Tests', () => {
 
     afterAll(async () => {
         // Close database connection
-        const db = getDB();
-        if (db) {
-            await db.close();
-        }
+        await closeDB();
 
         // Clean up test database file
         try {

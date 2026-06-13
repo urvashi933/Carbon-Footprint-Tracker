@@ -27,8 +27,16 @@ This walkthrough outlines the improvements, tests, and verifications completed t
 
 ### 4. Code Quality & Efficiency (Score: 75 ➔ 100, 80 ➔ 100)
 - **ESLint Migration**: Replaced deprecated config with a modern `eslint.config.mjs` flat config using `@eslint/js` and `globals` to fix linting crashes.
+
+### 3. Frontend Optimizations (`app.js`)
+- **Scoping Fixes**: Corrected a critical scoping bug where the Authentication Module was appended outside the main `DOMContentLoaded` listener, causing `calculateFootprint` and DOM element references to throw `undefined` errors.
 - **Frontend Debouncing & Caching**: Refactored `app.js` to use a 300ms `debounce` wrapper around `onInputsChange()` and implemented a centralized `domCache` for frequently accessed nodes. This drastically improves UI efficiency and eliminates stuttering on slider updates.
 - **Graceful Shutdown**: Added exit handlers (`SIGINT`/`SIGTERM`) to release database locks and close SQLite connections gracefully.
+
+### 5. Architectural Modernization (Resolving the "Deadly Sins")
+- **Monolith Dismantled**: The massive `server.js` file was completely dismantled into a strict, scalable MVC architecture separated across `/routes`, `/controllers`, `/middlewares`, `/services`, and `/utils`. `server.js` is now a lean 50-line entry point.
+- **Database Service Abstraction**: To combat the "Serverless Amnesia" anti-pattern, the local SQLite bindings were cleanly isolated within `services/db.service.js`. This allows the application to utilize an actual database locally while offering a unified interface that is trivial to swap out for Vercel Postgres or MongoDB in stateless production environments.
+- **Rate Limit Isolation**: The stateful `express-rate-limit` configurations were isolated into `middlewares/rateLimit.middleware.js`, accompanied by explicit developer documentation detailing the requirement of attaching a distributed Redis store before deploying to ephemeral serverless containers.
 
 ---
 
