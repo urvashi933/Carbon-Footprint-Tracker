@@ -233,6 +233,31 @@ document.addEventListener('DOMContentLoaded', () => {
     let categoryChart = null;
     let compareChart = null;
 
+    // --- DOM CACHE ---
+    const domCache = {
+        footprintValue: document.getElementById('total-footprint-value'),
+        status: document.getElementById('footprint-status'),
+        compareValue: document.getElementById('comparison-value'),
+        commitCount: document.getElementById('active-commitments-count'),
+        savingsValue: document.getElementById('projected-savings-value'),
+        categoryChartCtx: document.getElementById('categoryChart')?.getContext('2d'),
+        compareChartCtx: document.getElementById('compareChart')?.getContext('2d'),
+        compareYou: document.getElementById('compare-val-you')
+    };
+
+    // --- UTILITIES ---
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
     // --- INITIALIZE FROM LOCAL STORAGE ---
     function loadState() {
         const savedState = localStorage.getItem('ecotrace_state');
@@ -667,11 +692,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function onInputsChange() {
+    const onInputsChange = debounce(() => {
         saveState();
         checkUnlockedBadges();
         updateDashboardUI();
-    }
+    }, 300);
 
     // --- WEBSITE CARBON CHECKER LOGIC ---
     function runWebChecker() {
@@ -752,48 +777,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const results = calculateFootprint();
         
         // Total Footprint Text
-        const footprintValueEl = document.getElementById('total-footprint-value');
-        footprintValueEl.textContent = results.total.toFixed(2);
+        if (domCache.footprintValue) domCache.footprintValue.textContent = results.total.toFixed(2);
         
         // Status Badge
-        const statusEl = document.getElementById('footprint-status');
-        if (results.total < 4.0) {
-            statusEl.textContent = 'Excellent (Eco Target Met)';
-            statusEl.className = 'stat-subtitle status-good';
-        } else if (results.total < 8.0) {
-            statusEl.textContent = 'Moderate (Below Average)';
-            statusEl.className = 'stat-subtitle status-warn';
-        } else {
-            statusEl.textContent = 'Above Average (Action Needed)';
-            statusEl.className = 'stat-subtitle status-bad';
+        if (domCache.status) {
+            if (results.total < 4.0) {
+                domCache.status.textContent = 'Excellent (Eco Target Met)';
+                domCache.status.className = 'stat-subtitle status-good';
+            } else if (results.total < 8.0) {
+                domCache.status.textContent = 'Moderate (Below Average)';
+                domCache.status.className = 'stat-subtitle status-warn';
+            } else {
+                domCache.status.textContent = 'Above Average (Action Needed)';
+                domCache.status.className = 'stat-subtitle status-bad';
+            }
         }
 
         // Comparison vs National Average
-        const compareValueEl = document.getElementById('comparison-value');
-        const nationalAvg = 8.0;
-        const diffPercent = Math.round(((results.total - nationalAvg) / nationalAvg) * 100);
-        if (diffPercent < 0) {
-            compareValueEl.textContent = `${Math.abs(diffPercent)}% Less`;
-            compareValueEl.style.color = 'var(--color-green)';
-        } else if (diffPercent > 0) {
-            compareValueEl.textContent = `${diffPercent}% More`;
-            compareValueEl.style.color = '#ef4444';
-        } else {
-            compareValueEl.textContent = 'Equal';
-            compareValueEl.style.color = 'var(--text-primary)';
+        if (domCache.compareValue) {
+            const nationalAvg = 8.0;
+            const diffPercent = Math.round(((results.total - nationalAvg) / nationalAvg) * 100);
+            if (diffPercent < 0) {
+                domCache.compareValue.textContent = `${Math.abs(diffPercent)}% Less`;
+                domCache.compareValue.style.color = 'var(--color-green)';
+            } else if (diffPercent > 0) {
+                domCache.compareValue.textContent = `${diffPercent}% More`;
+                domCache.compareValue.style.color = '#ef4444';
+            } else {
+                domCache.compareValue.textContent = 'Equal';
+                domCache.compareValue.style.color = 'var(--text-primary)';
+            }
         }
 
         // Active Commitments count
-        const commitCountEl = document.getElementById('active-commitments-count');
-        commitCountEl.textContent = state.commitments.length;
+        if (domCache.commitCount) domCache.commitCount.textContent = state.commitments.length;
 
         // Estimated savings
-        const savingsValueEl = document.getElementById('projected-savings-value');
-        const totalSavings = state.commitments.reduce((acc, actionId) => {
-            const act = ACTIONS_DATABASE.find(a => a.id === actionId);
-            return acc + (act ? act.impact : 0);
-        }, 0);
-        savingsValueEl.textContent = totalSavings.toLocaleString() + ' kg';
+        if (domCache.savingsValue) {
+            const totalSavings = state.commitments.reduce((acc, actionId) => {
+                const act = ACTIONS_DATABASE.find(a => a.id === actionId);
+                return acc + (act ? act.impact : 0);
+            }, 0);
+            domCache.savingsValue.textContent = totalSavings.toLocaleString() + ' kg';
+        }
 
         // Redraw badges
         renderBadgesList();
@@ -822,8 +848,8 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryChart.options.plugins.legend.labels.color = fontColor;
             categoryChart.update();
         } else {
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            categoryChart = new Chart(ctxCat, {
+            if (domCache.categoryChartCtx) {
+                categoryChart = new Chart(domCache.categoryChartCtx, {
                 type: 'doughnut',
                 data: {
                     labels: categoryLabels,
@@ -858,6 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cutout: '65%'
                 }
             });
+            }
         }
 
         // 2. COMPARISON BAR CHART
@@ -878,8 +905,8 @@ document.addEventListener('DOMContentLoaded', () => {
             compareChart.options.scales.y.grid.color = gridColor;
             compareChart.update();
         } else {
-            const ctxComp = document.getElementById('compareChart').getContext('2d');
-            compareChart = new Chart(ctxComp, {
+            if (domCache.compareChartCtx) {
+                compareChart = new Chart(domCache.compareChartCtx, {
                 type: 'bar',
                 data: {
                     labels: compareLabels,
@@ -917,6 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+            }
         }
 
         // 3. UPDATE ACCESSIBLE SUMMARY TABLES
@@ -931,15 +959,15 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const cat in categoriesMap) {
             const val = categoriesMap[cat];
             const pct = totalValue > 0 ? (val / totalValue) * 100 : 0;
+            // Since there are dynamic breakdowns, we keep getElementById for these
             const valEl = document.getElementById(`breakdown-val-${cat}`);
             const pctEl = document.getElementById(`breakdown-pct-${cat}`);
             if (valEl) valEl.textContent = `${val.toFixed(2)} Tons`;
             if (pctEl) pctEl.textContent = `${pct.toFixed(0)}%`;
         }
 
-        const compareYouEl = document.getElementById('compare-val-you');
-        if (compareYouEl) {
-            compareYouEl.textContent = `${results.total.toFixed(2)} Tons`;
+        if (domCache.compareYou) {
+            domCache.compareYou.textContent = `${results.total.toFixed(2)} Tons`;
         }
     }
 

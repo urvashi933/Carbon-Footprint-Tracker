@@ -9,21 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
 // Load environment variables
 dotenv.config();
-
-// === TEMPORARY DIAGNOSTIC LOG ===
-console.log("=== GEMINI KEY DIAGNOSTIC ===");
-if (!process.env.GEMINI_API_KEY) {
-    console.log("RESULT: GEMINI_API_KEY is completely UNDEFINED or blank.");
-} else {
-    console.log("RESULT: Key found successfully!");
-    console.log("Length of key:", process.env.GEMINI_API_KEY.length);
-    console.log("Key starts with:", process.env.GEMINI_API_KEY.substring(0, 6));
-}
-console.log("=============================");
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -118,6 +105,7 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname));
 
 // --- INPUT SANITIZATION UTILITIES ---
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g;
 const INVISIBLE_CHARS = /[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060-\u2063]/g;
 
@@ -146,7 +134,7 @@ function escapeHtml(input) {
 function redactSecrets(input) {
     if (typeof input !== 'string') return '';
     let out = input;
-    out = out.replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, '[redacted-bearer]');
+    out = out.replace(/Bearer\s+[A-Za-z0-9._-]+/gi, '[redacted-bearer]');
     out = out.replace(/\b(sk|pk|api|key)[-_][A-Za-z0-9]{8,}\b/gi, '[redacted-key]');
     out = out.replace(/\beyJ[A-Za-z0-9._-]{10,}\b/g, '[redacted-jwt]');
     return out;
@@ -155,12 +143,27 @@ function redactSecrets(input) {
 // Secure fallback secret generated dynamically at runtime
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
-// --- IN-MEMORY DATABASE FOR SERVERLESS COMPATIBILITY ---
-let usersDB = [];
-let nextId = 1;
+// --- SQLITE DATABASE FOR PERSISTENCE ---
+const sqlite3 = require('sqlite3');
+const { open } = require('sqlite');
+
+let db;
 
 async function initDB() {
-    console.log("Initializing lightweight in-memory database...");
+    console.log("Initializing SQLite database...");
+    db = await open({
+        filename: path.join(__dirname, 'database.sqlite'),
+        driver: sqlite3.Database
+    });
+    
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            progress TEXT DEFAULT '{}'
+        )
+    `);
 }
 if (process.env.NODE_ENV !== 'test') {
     initDB().catch(console.error);
@@ -202,21 +205,19 @@ app.post('/api/register', async (req, res) => {
     }
 
     try {
-        const existingUser = usersDB.find(u => u.username === trimmedUsername);
+        const existingUser = await db.get('SELECT * FROM users WHERE username = ?', [trimmedUsername]);
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { 
-            id: nextId++, 
-            username: trimmedUsername, 
-            password: hashedPassword, 
-            progress: '{}' 
-        };
-        usersDB.push(newUser);
+        const result = await db.run(
+            'INSERT INTO users (username, password, progress) VALUES (?, ?, ?)',
+            [trimmedUsername, hashedPassword, '{}']
+        );
+        const newUserId = result.lastID;
 
-        const token = jwt.sign({ id: newUser.id, username: trimmedUsername }, JWT_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ id: newUserId, username: trimmedUsername }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token, username: trimmedUsername });
     } catch (e) {
         console.error(e);
@@ -233,7 +234,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     try {
-        const user = usersDB.find(u => u.username === username.trim());
+        const user = await db.get('SELECT * FROM users WHERE username = ?', [username.trim()]);
         if (!user) return res.status(400).json({ error: 'User not found' });
 
         const validPassword = await bcrypt.compare(password, user.password);
@@ -251,10 +252,9 @@ app.post('/api/login', async (req, res) => {
 // --- API: SAVE/LOAD PROGRESS ---
 app.post('/api/save-progress', authenticateToken, async (req, res) => {
     try {
-        const userIndex = usersDB.findIndex(u => u.id === req.user.id);
-        if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
+        const result = await db.run('UPDATE users SET progress = ? WHERE id = ?', [JSON.stringify(req.body.progress), req.user.id]);
+        if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
 
-        usersDB[userIndex].progress = JSON.stringify(req.body.progress);
         res.json({ success: true, message: 'Progress saved successfully' });
     } catch (e) {
         console.error(e);
@@ -264,7 +264,7 @@ app.post('/api/save-progress', authenticateToken, async (req, res) => {
 
 app.get('/api/load-progress', authenticateToken, async (req, res) => {
     try {
-        const user = usersDB.find(u => u.id === req.user.id);
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
         if (!user) return res.status(404).json({ error: 'User not found' });
         
         const progressObj = user.progress ? JSON.parse(user.progress) : {};

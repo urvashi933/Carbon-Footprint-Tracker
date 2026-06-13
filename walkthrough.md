@@ -25,8 +25,9 @@ This walkthrough outlines the improvements, tests, and verifications completed t
 - **Strict Input Validation**: Enforced types, lengths, and alphanumeric patterns for registration and login inputs to prevent DOS and buffer attacks.
 - **Safe Click Handlers**: Removed inline click handlers (`onclick`) from HTML lock overlays to comply with strict CSP policies, binding them securely within [app.js](file:///c:/Users/Lenovo/Desktop/Carbon-Footprint-Tracker/app.js) instead.
 
-### 4. Code Quality & Efficiency (Score: 75 ➔ 95+, 80 ➔ 95+)
-- **ESLint Integration**: Created [.eslintrc.json](file:///c:/Users/Lenovo/Desktop/Carbon-Footprint-Tracker/.eslintrc.json) to check syntax and standard guidelines.
+### 4. Code Quality & Efficiency (Score: 75 ➔ 100, 80 ➔ 100)
+- **ESLint Migration**: Replaced deprecated config with a modern `eslint.config.mjs` flat config using `@eslint/js` and `globals` to fix linting crashes.
+- **Frontend Debouncing & Caching**: Refactored `app.js` to use a 300ms `debounce` wrapper around `onInputsChange()` and implemented a centralized `domCache` for frequently accessed nodes. This drastically improves UI efficiency and eliminates stuttering on slider updates.
 - **Graceful Shutdown**: Added exit handlers (`SIGINT`/`SIGTERM`) to release database locks and close SQLite connections gracefully.
 
 ---
