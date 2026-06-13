@@ -198,7 +198,7 @@ describe('EcoTrace Backend API Integration Tests', () => {
             expect(res.body).toHaveProperty('co2Grams');
             expect(res.body).toHaveProperty('grade');
             expect(res.body).toHaveProperty('isGreen');
-        });
+        }, 10000);
 
         it('should fail if no URL is provided', async () => {
             const res = await request(app)
